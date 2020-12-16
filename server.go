@@ -165,10 +165,10 @@ func (s *Server) handleGameState(rw http.ResponseWriter, req *http.Request) {
 }
 
 // POST /guess
-func (s *Server) handleGuess(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) handleNextWord(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
-		GameID string `json:"game_id"`
-		Index  int    `json:"index"`
+		GameID  string `json:"game_id"`
+		Correct bool   `json:"correct"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -181,8 +181,8 @@ func (s *Server) handleGuess(rw http.ResponseWriter, req *http.Request) {
 
 	var err error
 	gh.update(func(g *Game) bool {
-		err = g.Guess(request.Index)
-		return err == nil
+		g.GetNextWord(request.Correct)
+		return true
 	})
 	if err != nil {
 		http.Error(rw, err.Error(), 400)
@@ -359,7 +359,7 @@ func (s *Server) Start(games map[string]*Game) error {
 	s.mux.HandleFunc("/stats", s.handleStats)
 	s.mux.HandleFunc("/next-game", s.handleNextGame)
 	s.mux.HandleFunc("/end-turn", s.handleEndTurn)
-	s.mux.HandleFunc("/guess", s.handleGuess)
+	s.mux.HandleFunc("/next-word", s.handleNextWord)
 	s.mux.HandleFunc("/game-state", s.handleGameState)
 	s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/dist"))))
 	s.mux.HandleFunc("/", s.handleIndex)

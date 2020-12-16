@@ -56,3 +56,45 @@ func TestGameShuffle(t *testing.T) {
 		currState = nextGameState(currState)
 	}
 }
+
+func TestGameSetUp(t *testing.T) {
+	d, err := dictionary.Load("assets/original.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initG := newGame("foo", GameState{
+		Seed:     1,
+		Round:    0,
+		Revealed: make([]bool, 25),
+		WordSet:  d.Words(),
+	}, GameOptions{})
+	if initG.Stage != Setup {
+		t.Errorf("Failed")
+	}
+}
+
+func TestGetNextWord(t *testing.T) {
+	initG := newGame("foo", GameState{
+		Seed:     1,
+		Round:    0,
+		Revealed: make([]bool, 0),
+		WordSet:  make([]string, 0),
+	}, GameOptions{})
+	initG.AddWord("bar")
+	initG.AddWord("foobar")
+
+	initG.GetNextWord(false)
+	if initG.currentWord == "" {
+		t.Errorf("Current Word not set")
+	}
+	initG.GetNextWord(true)
+
+	if len(initG.getAvailableWords()) != 1 {
+		t.Errorf("Correct word did not get taken out of pool")
+	}
+
+	initG.GetNextWord(true)
+	if initG.Stage != Explain {
+		t.Errorf("Stage not extended")
+	}
+}
