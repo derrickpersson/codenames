@@ -2,6 +2,7 @@ package codenames
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/jbowens/dictionary"
@@ -28,7 +29,7 @@ func BenchmarkGameMarshal(b *testing.B) {
 		Round:    0,
 		Revealed: make([]bool, 25),
 		WordSet:  d.Words(),
-	}, GameOptions{})
+	}, GameOptions{RandomWords: true})
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		_, err = json.Marshal(g)
@@ -46,7 +47,7 @@ func TestGameShuffle(t *testing.T) {
 
 	m := map[string]int{}
 	for i := 0; i < gamesWithoutRepeats; i++ {
-		g := newGame("foo", currState, GameOptions{})
+		g := newGame("foo", currState, GameOptions{RandomWords: true})
 		for _, w := range g.Words {
 			if prevI, ok := m[w]; ok {
 				t.Errorf("Word %q appeared twice, once in game %d and once in game %d.", w, prevI, i)
@@ -97,4 +98,15 @@ func TestGetNextWord(t *testing.T) {
 	if initG.Stage != Explain {
 		t.Errorf("Stage not extended")
 	}
+}
+
+func TestGameScoring(t *testing.T) {
+	g := newGame("scoring", GameState{
+		Seed:     1,
+		Round:    0,
+		Revealed: make([]bool, 0),
+		WordSet:  make([]string, 0),
+	}, GameOptions{})
+
+	fmt.Println("CurrentTeam: " + g.StartingTeam.String())
 }
