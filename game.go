@@ -295,7 +295,7 @@ func (g *Game) AddWord(word string) error {
 	return nil
 }
 
-func createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
+func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 	turnOrder := make([]TeamPlayer, 0)
 
 	teamRed := make([]TeamPlayer, 0)
@@ -310,22 +310,22 @@ func createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 	}
 
 	rotationLength := len(teamRed) * len(teamBlue) * 2
-	count := 0
+	count := g.StartingTeam
 	blueCount := 0
 	redCount := 0
 
 	for len(turnOrder) < rotationLength {
 		if count%2 == 0 {
-			if len(teamBlue) > 0 {
-				blueIdx := blueCount % len(teamBlue)
-				turnOrder = append(turnOrder, teamBlue[blueIdx])
-				blueCount++
-			}
-		} else {
 			if len(teamRed) > 0 {
 				redIdx := redCount % len(teamRed)
 				turnOrder = append(turnOrder, teamRed[redIdx])
 				redCount++
+			}
+		} else {
+			if len(teamBlue) > 0 {
+				blueIdx := blueCount % len(teamBlue)
+				turnOrder = append(turnOrder, teamBlue[blueIdx])
+				blueCount++
 			}
 		}
 		count++
@@ -336,7 +336,7 @@ func createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 func (g *Game) AddPlayer(player TeamPlayer) error {
 	if g.Stage == Setup {
 		g.TeamPlayers = append(g.TeamPlayers, player)
-		g.routingOrder = createRoutingOrder(g.TeamPlayers)
+		g.routingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {
 		return errors.New("can't add players when past the setup stage")
 	}

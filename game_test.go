@@ -171,4 +171,8 @@ func TestPlayerRouting(t *testing.T) {
 	if g.routingOrder[g.currentPlayer] != playerA {
 		t.Errorf("Wrong player in rotation")
 	}
+
+	if g.StartingTeam != g.routingOrder[0].team {
+		t.Errorf("Starting team not in sync with team rotation")
+	}
 }
