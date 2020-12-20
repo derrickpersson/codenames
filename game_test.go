@@ -184,4 +184,9 @@ func TestPlayerRouting(t *testing.T) {
 		t.Errorf("Player not properly removed")
 	}
 
+	g.ChangePlayerTeam("A", 0)
+	// Diff memory allocation because re-creating the player
+	if g.TeamPlayers[len(g.TeamPlayers)-1].playerName != playerA.playerName {
+		t.Errorf("Player not re-added in last place")
+	}
 }

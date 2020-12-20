@@ -353,6 +353,16 @@ func findPlayerIndex(s []TeamPlayer, search string) int {
 	return -1
 }
 
+func (g *Game) ChangePlayerTeam(name string, team Team) error {
+	if err := g.RemovePlayer(name); err != nil {
+		return err
+	}
+	if err := g.AddPlayer(TeamPlayer{playerName: name, team: team}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (g *Game) RemovePlayer(name string) error {
 	if g.Stage == Setup {
 		playerIdx := findPlayerIndex(g.TeamPlayers, name)
