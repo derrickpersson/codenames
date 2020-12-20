@@ -100,13 +100,38 @@ func TestGetNextWord(t *testing.T) {
 	}
 }
 
-func TestGameScoring(t *testing.T) {
+func TestPlayerRouting(t *testing.T) {
 	g := newGame("scoring", GameState{
 		Seed:     1,
 		Round:    0,
 		Revealed: make([]bool, 0),
-		WordSet:  make([]string, 0),
-	}, GameOptions{})
+		WordSet:  make([]string, 25),
+	}, GameOptions{RandomWords: true})
+	player1 := TeamPlayer{team: 1, playerName: "A"}
+	player2 := TeamPlayer{team: 0, playerName: "1"}
+	player3 := TeamPlayer{team: 1, playerName: "B"}
+	player4 := TeamPlayer{team: 0, playerName: "2"}
+	player5 := TeamPlayer{team: 0, playerName: "3"}
+	g.AddPlayer(player1)
+	g.AddPlayer(player2)
 
-	fmt.Println("CurrentTeam: " + g.StartingTeam.String())
+	if g.routingOrder[0] != player1 {
+		t.Errorf("Wrong Routing Order")
+	}
+
+	if g.routingOrder[1] != player2 {
+		t.Errorf("Wrong Routing Order")
+	}
+
+	g.AddPlayer(player3)
+	g.AddPlayer(player4)
+	if g.routingOrder[2] != player3 {
+		fmt.Println("Player: " + g.routingOrder[2].playerName)
+		t.Errorf("Wrong Routing Order")
+	}
+
+	g.AddPlayer(player5)
+	if g.routingOrder[5] != player5 {
+		t.Errorf("Wrong Routing Order")
+	}
 }

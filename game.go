@@ -208,6 +208,7 @@ func (g *Game) NextTurn(currentTurn int) bool {
 	}
 	g.UpdatedAt = time.Now()
 	g.Round++
+	g.getNextPlayer()
 	g.RoundStartedAt = time.Now()
 	return true
 }
@@ -295,14 +296,41 @@ func (g *Game) AddWord(word string) error {
 }
 
 func createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
-	// Divide team players into their teams.
-	// Alternate picking one team vs the other
-	// If one team has more members than the other team
-	// Repeat in a balanced way, picking team members in order
-	// Stop once all members in the team with more people have gone an equal number of times
-	// If there is only one team member from one team, return that team member.
-	// If there is two team members; assign one to another team?
-	return teamPlayers
+	turnOrder := make([]TeamPlayer, 0)
+
+	teamRed := make([]TeamPlayer, 0)
+	teamBlue := make([]TeamPlayer, 0)
+
+	for idx, tp := range teamPlayers {
+		if tp.team == Red {
+			teamRed = append(teamRed, teamPlayers[idx])
+		} else if tp.team == Blue {
+			teamBlue = append(teamBlue, teamPlayers[idx])
+		}
+	}
+
+	rotationLength := len(teamRed) * len(teamBlue) * 2
+	count := 0
+	blueCount := 0
+	redCount := 0
+
+	for len(turnOrder) < rotationLength {
+		if count%2 == 0 {
+			if len(teamBlue) > 0 {
+				blueIdx := blueCount % len(teamBlue)
+				turnOrder = append(turnOrder, teamBlue[blueIdx])
+				blueCount++
+			}
+		} else {
+			if len(teamRed) > 0 {
+				redIdx := redCount % len(teamRed)
+				turnOrder = append(turnOrder, teamRed[redIdx])
+				redCount++
+			}
+		}
+		count++
+	}
+	return turnOrder
 }
 
 func (g *Game) AddPlayer(player TeamPlayer) error {
@@ -310,7 +338,7 @@ func (g *Game) AddPlayer(player TeamPlayer) error {
 		g.TeamPlayers = append(g.TeamPlayers, player)
 		g.routingOrder = createRoutingOrder(g.TeamPlayers)
 	} else {
-		return errors.New("can't add words when past the setup stage")
+		return errors.New("can't add players when past the setup stage")
 	}
 	return nil
 }
