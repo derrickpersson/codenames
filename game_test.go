@@ -175,4 +175,13 @@ func TestPlayerRouting(t *testing.T) {
 	if g.StartingTeam != g.routingOrder[0].team {
 		t.Errorf("Starting team not in sync with team rotation")
 	}
+
+	if g.TeamPlayers[3] != player2 {
+		t.Errorf("Player2 is in wrong place")
+	}
+	g.RemovePlayer("2")
+	if g.TeamPlayers[3] == player2 {
+		t.Errorf("Player not properly removed")
+	}
+
 }

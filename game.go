@@ -335,10 +335,35 @@ func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 
 func (g *Game) AddPlayer(player TeamPlayer) error {
 	if g.Stage == Setup {
+		// Check for unique name ?
 		g.TeamPlayers = append(g.TeamPlayers, player)
 		g.routingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {
 		return errors.New("can't add players when past the setup stage")
+	}
+	return nil
+}
+
+func findPlayerIndex(s []TeamPlayer, search string) int {
+	for idx, item := range s {
+		if item.playerName == search {
+			return idx
+		}
+	}
+	return -1
+}
+
+func (g *Game) RemovePlayer(name string) error {
+	if g.Stage == Setup {
+		playerIdx := findPlayerIndex(g.TeamPlayers, name)
+		if playerIdx == -1 {
+			return errors.New("Player not found")
+		}
+		g.TeamPlayers[len(g.TeamPlayers)-1], g.TeamPlayers[playerIdx] = g.TeamPlayers[playerIdx], g.TeamPlayers[len(g.TeamPlayers)-1]
+		g.TeamPlayers = g.TeamPlayers[:len(g.TeamPlayers)-1]
+		g.routingOrder = g.createRoutingOrder(g.TeamPlayers)
+	} else {
+		return errors.New("can't remove players when past the setup stage")
 	}
 	return nil
 }
