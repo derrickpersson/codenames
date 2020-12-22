@@ -221,9 +221,27 @@ func (g *Game) updateTeamScore(team Team) {
 	}
 }
 
+func (g *Game) setWinningTeam() {
+	var topPoints = 0
+	var topTeam = Neutral
+	for _, t := range g.TeamPoints {
+		if t.points == topPoints {
+			topTeam = Neutral
+		} else if t.points > topPoints {
+			topPoints = t.points
+			topTeam = t.team
+		}
+	}
+	g.WinningTeam = &topTeam
+}
+
 func (g *Game) moveToNextStage() {
-	g.Stage++
-	g.GameState.Revealed = make([]bool, len(g.Words))
+	if g.Stage == Gestures {
+		g.setWinningTeam()
+	} else {
+		g.Stage++
+		g.GameState.Revealed = make([]bool, len(g.Words))
+	}
 }
 
 func (g *Game) getAvailableWords() []string {
