@@ -309,6 +309,7 @@ func (g *Game) currentTeam() Team {
 
 func (g *Game) AddWord(word string) error {
 	if g.Stage == Setup {
+		g.UpdatedAt = time.Now()
 		g.Words = append(g.Words, word)
 		g.GameState.Revealed = append(g.GameState.Revealed, false)
 	} else {
@@ -358,6 +359,7 @@ func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 func (g *Game) AddPlayer(player TeamPlayer) error {
 	if g.Stage == Setup {
 		// Check for unique name ?
+		g.UpdatedAt = time.Now()
 		g.TeamPlayers = append(g.TeamPlayers, player)
 		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {
@@ -392,6 +394,7 @@ func (g *Game) RemovePlayer(name string) error {
 			return errors.New("Player not found")
 		}
 		g.TeamPlayers[len(g.TeamPlayers)-1], g.TeamPlayers[playerIdx] = g.TeamPlayers[playerIdx], g.TeamPlayers[len(g.TeamPlayers)-1]
+		g.UpdatedAt = time.Now()
 		g.TeamPlayers = g.TeamPlayers[:len(g.TeamPlayers)-1]
 		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {

@@ -191,6 +191,28 @@ func (s *Server) handleNextWord(rw http.ResponseWriter, req *http.Request) {
 	writeGame(rw, gh)
 }
 
+// POST /add-word
+func (s *Server) handleAddWord(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID	 string 	`json:"game_id"`
+		Word	 string 	`json:"word"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+
+	gh.update(func(g *Game) bool {
+		err := g.AddWord(request.Word)
+		return err == nil
+	})
+	writeGame(rw, gh)
+}
+
 // POST /end-turn
 func (s *Server) handleEndTurn(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
@@ -371,6 +393,7 @@ func (s *Server) Start(games map[string]*Game) error {
 	s.mux.HandleFunc("/end-turn", s.handleEndTurn)
 	s.mux.HandleFunc("/next-word", s.handleNextWord)
 	s.mux.HandleFunc("/game-state", s.handleGameState)
+	s.mux.HandleFunc("/add-word", s.handleAddWord)
 	s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/dist"))))
 	s.mux.HandleFunc("/", s.handleIndex)
 
