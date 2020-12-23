@@ -155,8 +155,8 @@ type Game struct {
 }
 
 type TeamPlayer struct {
-	team       Team
-	playerName string
+	Team       Team   `json:"team"`
+	PlayerName string `json:"player_name"`
 }
 
 type TeamPoint struct {
@@ -325,9 +325,9 @@ func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 	teamBlue := make([]TeamPlayer, 0)
 
 	for idx, tp := range teamPlayers {
-		if tp.team == Red {
+		if tp.Team == Red {
 			teamRed = append(teamRed, teamPlayers[idx])
-		} else if tp.team == Blue {
+		} else if tp.Team == Blue {
 			teamBlue = append(teamBlue, teamPlayers[idx])
 		}
 	}
@@ -370,7 +370,7 @@ func (g *Game) AddPlayer(player TeamPlayer) error {
 
 func findPlayerIndex(s []TeamPlayer, search string) int {
 	for idx, item := range s {
-		if item.playerName == search {
+		if item.PlayerName == search {
 			return idx
 		}
 	}
@@ -381,7 +381,7 @@ func (g *Game) ChangePlayerTeam(name string, team Team) error {
 	if err := g.RemovePlayer(name); err != nil {
 		return err
 	}
-	if err := g.AddPlayer(TeamPlayer{playerName: name, team: team}); err != nil {
+	if err := g.AddPlayer(TeamPlayer{PlayerName: name, Team: team}); err != nil {
 		return err
 	}
 	return nil

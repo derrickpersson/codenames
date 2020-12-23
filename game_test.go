@@ -127,11 +127,11 @@ func TestPlayerRouting(t *testing.T) {
 		Revealed: make([]bool, 0),
 		WordSet:  make([]string, 25),
 	}, GameOptions{RandomWords: true})
-	playerA := TeamPlayer{team: 1, playerName: "A"}
-	player1 := TeamPlayer{team: 0, playerName: "1"}
-	playerB := TeamPlayer{team: 1, playerName: "B"}
-	player2 := TeamPlayer{team: 0, playerName: "2"}
-	player3 := TeamPlayer{team: 0, playerName: "3"}
+	playerA := TeamPlayer{Team: 1, PlayerName: "A"}
+	player1 := TeamPlayer{Team: 0, PlayerName: "1"}
+	playerB := TeamPlayer{Team: 1, PlayerName: "B"}
+	player2 := TeamPlayer{Team: 0, PlayerName: "2"}
+	player3 := TeamPlayer{Team: 0, PlayerName: "3"}
 	g.AddPlayer(playerA)
 	g.AddPlayer(player1)
 
@@ -146,7 +146,7 @@ func TestPlayerRouting(t *testing.T) {
 	g.AddPlayer(playerB)
 	g.AddPlayer(player2)
 	if g.RoutingOrder[2] != playerB {
-		fmt.Println("Player: " + g.RoutingOrder[2].playerName)
+		fmt.Println("Player: " + g.RoutingOrder[2].PlayerName)
 		t.Errorf("Wrong Routing Order")
 	}
 
@@ -192,7 +192,7 @@ func TestPlayerRouting(t *testing.T) {
 		t.Errorf("Wrong player in rotation")
 	}
 
-	if g.StartingTeam != g.RoutingOrder[0].team {
+	if g.StartingTeam != g.RoutingOrder[0].Team {
 		t.Errorf("Starting team not in sync with team rotation")
 	}
 
@@ -206,7 +206,7 @@ func TestPlayerRouting(t *testing.T) {
 
 	g.ChangePlayerTeam("A", 0)
 	// Diff memory allocation because re-creating the player
-	if g.TeamPlayers[len(g.TeamPlayers)-1].playerName != playerA.playerName {
+	if g.TeamPlayers[len(g.TeamPlayers)-1].PlayerName != playerA.PlayerName {
 		t.Errorf("Player not re-added in last place")
 	}
 }
