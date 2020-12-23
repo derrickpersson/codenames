@@ -199,7 +199,7 @@ func TestPlayerRouting(t *testing.T) {
 	if g.TeamPlayers[3] != player2 {
 		t.Errorf("Player2 is in wrong place")
 	}
-	g.RemovePlayer("2")
+	g.DeletePlayer("2")
 	if g.TeamPlayers[3] == player2 {
 		t.Errorf("Player not properly removed")
 	}

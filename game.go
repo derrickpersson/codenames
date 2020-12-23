@@ -318,6 +318,21 @@ func (g *Game) AddWord(word string) error {
 	return nil
 }
 
+func (g *Game) DeleteWord(word string) error {
+	if g.Stage == Setup {
+		wordIdx := findWordIndex(g.Words, word)
+		if wordIdx == -1 {
+			return errors.New("Player not found")
+		}
+		g.Words[len(g.Words)-1], g.Words[wordIdx] = g.Words[wordIdx], g.Words[len(g.Words)-1]
+		g.GameState.Revealed[len(g.GameState.Revealed)-1], g.GameState.Revealed[wordIdx] = g.GameState.Revealed[wordIdx], g.GameState.Revealed[len(g.GameState.Revealed)-1]
+		g.UpdatedAt = time.Now()
+		g.Words = g.Words[:len(g.Words)-1]
+		g.GameState.Revealed = g.GameState.Revealed[:len(g.GameState.Revealed)-1]
+	}
+	return nil
+}
+
 func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 	turnOrder := make([]TeamPlayer, 0)
 
@@ -368,6 +383,15 @@ func (g *Game) AddPlayer(player TeamPlayer) error {
 	return nil
 }
 
+func findWordIndex(s []string, search string) int {
+	for idx, item := range s {
+		if item == search {
+			return idx
+		}
+	}
+	return -1
+}
+
 func findPlayerIndex(s []TeamPlayer, search string) int {
 	for idx, item := range s {
 		if item.PlayerName == search {
@@ -378,7 +402,7 @@ func findPlayerIndex(s []TeamPlayer, search string) int {
 }
 
 func (g *Game) ChangePlayerTeam(name string, team Team) error {
-	if err := g.RemovePlayer(name); err != nil {
+	if err := g.DeletePlayer(name); err != nil {
 		return err
 	}
 	if err := g.AddPlayer(TeamPlayer{PlayerName: name, Team: team}); err != nil {
@@ -387,7 +411,7 @@ func (g *Game) ChangePlayerTeam(name string, team Team) error {
 	return nil
 }
 
-func (g *Game) RemovePlayer(name string) error {
+func (g *Game) DeletePlayer(name string) error {
 	if g.Stage == Setup {
 		playerIdx := findPlayerIndex(g.TeamPlayers, name)
 		if playerIdx == -1 {
