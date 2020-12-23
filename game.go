@@ -149,9 +149,9 @@ type Game struct {
 	TeamPlayers   []TeamPlayer `json:"team_players,omitempty"`
 	Stage         GameStage    `json:"stage"`
 	TeamPoints    []TeamPoint  `json:"team_points,omitempty"`
-	currentPlayer int          `json:"current_player"`
-	routingOrder  []TeamPlayer `json:"routing_order"`
-	currentWord   string       `json:"current_word"`
+	CurrentPlayer int          `json:"current_player"`
+	RoutingOrder  []TeamPlayer `json:"routing_order"`
+	CurrentWord   string       `json:"current_word"`
 }
 
 type TeamPlayer struct {
@@ -244,6 +244,7 @@ func (g *Game) moveToNextStage() {
 	} else {
 		g.Stage++
 		g.GameState.Revealed = make([]bool, len(g.Words))
+		g.CurrentWord = ""
 	}
 }
 
@@ -261,7 +262,7 @@ func (g *Game) GetNextWord(correct bool) {
 	if correct {
 		g.updateTeamScore(g.currentTeam())
 		for idx, value := range g.Words {
-			if value == g.currentWord {
+			if value == g.CurrentWord {
 				g.GameState.Revealed[idx] = true
 			}
 		}
@@ -276,7 +277,7 @@ func (g *Game) GetNextWord(correct bool) {
 
 		pick := availableWords[idx]
 
-		g.currentWord = pick
+		g.CurrentWord = pick
 	}
 	g.UpdatedAt = time.Now()
 }
@@ -358,7 +359,7 @@ func (g *Game) AddPlayer(player TeamPlayer) error {
 	if g.Stage == Setup {
 		// Check for unique name ?
 		g.TeamPlayers = append(g.TeamPlayers, player)
-		g.routingOrder = g.createRoutingOrder(g.TeamPlayers)
+		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {
 		return errors.New("can't add players when past the setup stage")
 	}
@@ -392,7 +393,7 @@ func (g *Game) RemovePlayer(name string) error {
 		}
 		g.TeamPlayers[len(g.TeamPlayers)-1], g.TeamPlayers[playerIdx] = g.TeamPlayers[playerIdx], g.TeamPlayers[len(g.TeamPlayers)-1]
 		g.TeamPlayers = g.TeamPlayers[:len(g.TeamPlayers)-1]
-		g.routingOrder = g.createRoutingOrder(g.TeamPlayers)
+		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
 	} else {
 		return errors.New("can't remove players when past the setup stage")
 	}
@@ -400,10 +401,10 @@ func (g *Game) RemovePlayer(name string) error {
 }
 
 func (g *Game) getNextPlayer() {
-	if g.currentPlayer+1 == len(g.routingOrder) {
-		g.currentPlayer = 0
+	if g.CurrentPlayer+1 == len(g.RoutingOrder) {
+		g.CurrentPlayer = 0
 	} else {
-		g.currentPlayer++
+		g.CurrentPlayer++
 	}
 }
 
@@ -425,9 +426,9 @@ func newGame(id string, state GameState, opts GameOptions) *Game {
 		TeamPlayers:    make([]TeamPlayer, 0, 0),
 		Stage:          Setup,
 		TeamPoints:     make([]TeamPoint, 0, 2),
-		currentPlayer:  0, // Circular array reference indx for routingOrder
-		routingOrder:   make([]TeamPlayer, 0, 0),
-		currentWord:    ``,
+		CurrentPlayer:  0, // Circular array reference indx for routingOrder
+		RoutingOrder:   make([]TeamPlayer, 0, 0),
+		CurrentWord:    ``,
 	}
 
 	if opts.RandomWords {

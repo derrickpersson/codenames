@@ -105,7 +105,7 @@ func TestGetNextWord(t *testing.T) {
 	initG.AddWord("foobar")
 
 	initG.GetNextWord(false)
-	if initG.currentWord == "" {
+	if initG.CurrentWord == "" {
 		t.Errorf("Current Word not set")
 	}
 	initG.GetNextWord(true)
@@ -135,48 +135,48 @@ func TestPlayerRouting(t *testing.T) {
 	g.AddPlayer(playerA)
 	g.AddPlayer(player1)
 
-	if g.routingOrder[0] != playerA {
+	if g.RoutingOrder[0] != playerA {
 		t.Errorf("Wrong Routing Order")
 	}
 
-	if g.routingOrder[1] != player1 {
+	if g.RoutingOrder[1] != player1 {
 		t.Errorf("Wrong Routing Order")
 	}
 
 	g.AddPlayer(playerB)
 	g.AddPlayer(player2)
-	if g.routingOrder[2] != playerB {
-		fmt.Println("Player: " + g.routingOrder[2].playerName)
+	if g.RoutingOrder[2] != playerB {
+		fmt.Println("Player: " + g.RoutingOrder[2].playerName)
 		t.Errorf("Wrong Routing Order")
 	}
 
 	g.AddPlayer(player3)
-	if g.routingOrder[5] != player3 {
+	if g.RoutingOrder[5] != player3 {
 		t.Errorf("Wrong Routing Order")
 	}
 
-	if g.routingOrder[g.currentPlayer] != playerA {
+	if g.RoutingOrder[g.CurrentPlayer] != playerA {
 		t.Errorf("Wrong player in rotation")
 	}
 
 	g.getNextPlayer()
-	if g.routingOrder[g.currentPlayer] != player1 {
+	if g.RoutingOrder[g.CurrentPlayer] != player1 {
 		t.Errorf("Wrong player in rotation")
 	}
 	g.getNextPlayer()
-	if g.routingOrder[g.currentPlayer] != playerB {
+	if g.RoutingOrder[g.CurrentPlayer] != playerB {
 		t.Errorf("Wrong player in rotation")
 	}
 	g.getNextPlayer()
-	if g.routingOrder[g.currentPlayer] != player2 {
+	if g.RoutingOrder[g.CurrentPlayer] != player2 {
 		t.Errorf("Wrong player in rotation")
 	}
 	g.getNextPlayer()
-	if g.routingOrder[g.currentPlayer] != playerA {
+	if g.RoutingOrder[g.CurrentPlayer] != playerA {
 		t.Errorf("Wrong player in rotation")
 	}
 	g.getNextPlayer()
-	if g.routingOrder[g.currentPlayer] != player3 {
+	if g.RoutingOrder[g.CurrentPlayer] != player3 {
 		t.Errorf("Wrong player in rotation")
 	}
 
@@ -188,11 +188,11 @@ func TestPlayerRouting(t *testing.T) {
 	g.getNextPlayer() // 3
 	g.getNextPlayer() // A
 	// Get next player properly loops over all players in the round
-	if g.routingOrder[g.currentPlayer] != playerA {
+	if g.RoutingOrder[g.CurrentPlayer] != playerA {
 		t.Errorf("Wrong player in rotation")
 	}
 
-	if g.StartingTeam != g.routingOrder[0].team {
+	if g.StartingTeam != g.RoutingOrder[0].team {
 		t.Errorf("Starting team not in sync with team rotation")
 	}
 

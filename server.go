@@ -220,6 +220,7 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		TimerDurationMS int64    `json:"timer_duration_ms"`
 		EnforceTimer    bool     `json:"enforce_timer"`
 		RandomWords     bool     `json:"random_words"`
+		//		PlayerName      string   `json:"player_name"`
 	}
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
