@@ -2,6 +2,12 @@ html,
 body {
   margin: 0;
   font-family: 'Roboto', verdana, sans-serif;
+  box-sizing: border-box;
+}
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 
 #topbar {
@@ -59,17 +65,26 @@ p.intro {
 
 #new-game input#game-name {
   height: 50px;
-  width: 350px;
+  width: 100%;
   padding: 5px 10px;
   font-size: 1.3em;
   border: 1px #ddd solid;
-  border-right: none;
+  letter-spacing: 0.1em;
+  margin: 1em 0;
+}
+
+#new-game input#player-name {
+  height: 50px;
+  width: 100%;
+  padding: 5px 10px;
+  font-size: 1.3em;
+  border: 1px #ddd solid;
   letter-spacing: 0.1em;
 }
 
 #new-game button {
   height: 62px;
-  width: 120px;
+  width: 100%;
   padding: 5px 10px;
   background: #e1f4d0;
   border: 1px #ddd solid;
@@ -180,6 +195,9 @@ p.intro {
 #timer-settings {
   margin: 2em 0 2em 0;
   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 #timer-settings .toggle-set {
   margin-left: 0;
@@ -201,6 +219,14 @@ p.intro {
   align-items: center;
   justify-content: space-between;
 }
+
+.toggle-container {
+  margin: 2em 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 #timer-duration div {
   display: flex;
   align-items: center;

@@ -4,20 +4,23 @@ import CustomWords from '~/ui/custom_words';
 import WordSetToggle from '~/ui/wordset_toggle';
 import TimerSettings from '~/ui/timer_settings';
 import OriginalWords from '~/words.json';
+import Toggle from '~/ui/toggle';
 
 // TODO:
 // Hide all the word settings inside of a 'random words' wrapper
 // Show selectedWordSets / setSelectedWordSets etc.
 
 export const Lobby = ({ defaultGameID }) => {
+  const [playerName, setPlayerName] = React.useState('');
   const [newGameName, setNewGameName] = React.useState(defaultGameID);
+  const [enableRandomWords, setEnableRandomWords] = React.useState(false);
   const [selectedWordSets, setSelectedWordSets] = React.useState([
     'English (Original)',
   ]);
   const [customWordsText, setCustomWordsText] = React.useState('');
   const [words, setWords] = React.useState({ ...OriginalWords, Custom: [] });
   const [warning, setWarning] = React.useState(null);
-  const [timer, setTimer] = React.useState(null);
+  const [timer, setTimer] = React.useState([1, 0]);
   const [enforceTimerEnabled, setEnforceTimerEnabled] = React.useState(false);
 
   let selectedWordCount = selectedWordSets
@@ -32,7 +35,7 @@ export const Lobby = ({ defaultGameID }) => {
 
   function handleNewGame(e) {
     e.preventDefault();
-    if (!newGameName) {
+    if (!newGameName || !playerName) {
       return;
     }
 
@@ -48,11 +51,12 @@ export const Lobby = ({ defaultGameID }) => {
     axios
       .post('/next-game', {
         game_id: newGameName,
-        word_set: combinedWordSet,
+        word_set: enableRandomWords ? combinedWordSet : [],
         create_new: false,
         timer_duration_ms:
           timer && timer.length ? timer[0] * 60 * 1000 + timer[1] * 1000 : 0,
-        enforce_timer: timer && timer.length && enforceTimerEnabled,
+        enforce_timer: true,
+        playerName,
       })
       .then(() => {
         const newURL = (document.location.pathname = '/' + newGameName);
@@ -80,10 +84,20 @@ export const Lobby = ({ defaultGameID }) => {
       <div id="available-games">
         <form id="new-game">
           <p className="intro">
-            Play Codenames online across multiple devices on a shared board. To
-            create a new game or join an existing game, enter a game identifier
-            and click 'GO'.
+            Play bowls online with friends. To create a new game or join an
+            existing game, enter your name and a game identifier and click 'GO'.
           </p>
+          <input
+            type="text"
+            id="player-name"
+            aria-label="player name"
+            autoFocus
+            onChange={(e) => {
+              setPlayerName(e.target.value);
+            }}
+            value={playerName}
+            placeholder={'Your name'}
+          />
           <input
             type="text"
             id="game-name"
@@ -95,7 +109,10 @@ export const Lobby = ({ defaultGameID }) => {
             value={newGameName}
           />
 
-          <button disabled={!newGameName.length} onClick={handleNewGame}>
+          <button
+            disabled={!newGameName.length || !playerName.length}
+            onClick={handleNewGame}
+          >
             Go
           </button>
 
@@ -104,7 +121,6 @@ export const Lobby = ({ defaultGameID }) => {
           ) : (
             <div></div>
           )}
-
           <TimerSettings
             {...{
               timer,
@@ -114,41 +130,35 @@ export const Lobby = ({ defaultGameID }) => {
             }}
           />
 
-          <div id="new-game-options">
-            <div id="wordsets">
-              <p className="instruction">
-                You've selected <strong>{selectedWordCount}</strong> words.
-              </p>
-              <div id="default-wordsets">
-                {langs.map((_label) => (
-                  <WordSetToggle
-                    key={_label}
-                    words={words[_label]}
-                    label={_label}
-                    selected={selectedWordSets.includes(_label)}
-                    onToggle={(e) => toggleWordSet(_label)}
-                  ></WordSetToggle>
-                ))}
-              </div>
-
-              <CustomWords
-                words={customWordsText}
-                onWordChange={(w) => {
-                  setCustomWordsText(w);
-                  setWords({
-                    ...words,
-                    Custom: w
-                      .trim()
-                      .split(',')
-                      .map((w) => w.trim())
-                      .filter((w) => w.length > 0),
-                  });
-                }}
-                selected={selectedWordSets.includes('Custom')}
-                onToggle={(e) => toggleWordSet('Custom')}
-              />
-            </div>
+          <div className="toggle-container">
+            <span>Use Random Words:</span>
+            <Toggle
+              name="enable random words"
+              state={enableRandomWords}
+              handleToggle={() => setEnableRandomWords(!enableRandomWords)}
+            />
           </div>
+
+          {enableRandomWords && (
+            <div id="new-game-options">
+              <div id="wordsets">
+                <p className="instruction">
+                  You've selected <strong>{selectedWordCount}</strong> words.
+                </p>
+                <div id="default-wordsets">
+                  {langs.map((_label) => (
+                    <WordSetToggle
+                      key={_label}
+                      words={words[_label]}
+                      label={_label}
+                      selected={selectedWordSets.includes(_label)}
+                      onToggle={(e) => toggleWordSet(_label)}
+                    ></WordSetToggle>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </form>
       </div>
     </div>
