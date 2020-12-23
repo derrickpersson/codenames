@@ -411,6 +411,12 @@ func (g *Game) ChangePlayerTeam(name string, team Team) error {
 	return nil
 }
 
+func (g *Game) GetRandomTeam() Team {
+	randRnd := rand.New(rand.NewSource(rand.Int63()))
+	randomTeam := Team(randRnd.Intn(2)) + Red
+	return randomTeam
+}
+
 func (g *Game) DeletePlayer(name string) error {
 	if g.Stage == Setup {
 		playerIdx := findPlayerIndex(g.TeamPlayers, name)

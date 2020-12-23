@@ -332,7 +332,7 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		TimerDurationMS int64    `json:"timer_duration_ms"`
 		EnforceTimer    bool     `json:"enforce_timer"`
 		RandomWords     bool     `json:"random_words"`
-		//		PlayerName      string   `json:"player_name"`
+		PlayerName      string   `json:"player_name"`
 	}
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
@@ -380,6 +380,13 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		if !ok {
 			// no game exists, create for the first time
 			gh = newHandle(newGame(request.GameID, randomState(words), opts), s.Store)
+			gh.update(func(g *Game) bool {
+				err := gh.g.AddPlayer(TeamPlayer{
+					PlayerName: request.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+				return err == nil
+			})
 			s.games[request.GameID] = gh
 		} else if request.CreateNew {
 			replacedCh := gh.replaced
@@ -388,6 +395,10 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 
 			nextState := nextGameState(gh.g.GameState)
 			gh = newHandle(newGame(request.GameID, nextState, opts), s.Store)
+			gh.g.AddPlayer(TeamPlayer{
+				PlayerName: request.PlayerName,
+				Team:       gh.g.GetRandomTeam(),
+			})
 			s.games[request.GameID] = gh
 
 			// signal to waiting /game-state goroutines that the
@@ -401,6 +412,14 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Printf("Unable to delete old game %q from disk: %s\n", previousGame.ID, err)
 			}
+		} else {
+			gh.update(func(g *Game) bool {
+				err := gh.g.AddPlayer(TeamPlayer{
+					PlayerName: request.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+				return err == nil
+			})
 		}
 	}()
 	writeGame(rw, gh)
