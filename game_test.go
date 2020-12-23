@@ -74,6 +74,26 @@ func TestGameSetUp(t *testing.T) {
 	}
 }
 
+func TestRandomWordsSetup(t *testing.T) {
+	d, err := dictionary.Load("assets/original.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	initG := newGame("foo", GameState{
+		Seed:     1,
+		Round:    0,
+		Revealed: make([]bool, 25),
+		WordSet:  d.Words(),
+	}, GameOptions{RandomWords: true})
+	if initG.Stage != Setup {
+		t.Errorf("Failed")
+	}
+
+	if len(initG.Words) != 25 {
+		t.Errorf("Not enough words to play with")
+	}
+}
+
 func TestGetNextWord(t *testing.T) {
 	initG := newGame("foo", GameState{
 		Seed:     1,

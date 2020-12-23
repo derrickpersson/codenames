@@ -111,11 +111,14 @@ func (gs GameState) anyRevealed() bool {
 }
 
 func randomState(words []string) GameState {
+	for _, w := range words {
+		fmt.Println("Has word: " + w)
+	}
 	return GameState{
 		Seed:      rand.Int63(),
 		PermIndex: 0,
 		Round:     0,
-		Revealed:  make([]bool, wordsPerGame),
+		Revealed:  make([]bool, 0),
 		WordSet:   words,
 	}
 }
@@ -127,7 +130,7 @@ func nextGameState(state GameState) GameState {
 		state.Seed = rand.Int63()
 		state.PermIndex = 0
 	}
-	state.Revealed = make([]bool, wordsPerGame)
+	state.Revealed = make([]bool, 0)
 	state.Round = 0
 	return state
 }
@@ -435,6 +438,7 @@ func newGame(id string, state GameState, opts GameOptions) *Game {
 		for _, i := range perm[permIndex : permIndex+wordsPerGame] {
 			w := state.WordSet[perm[i]]
 			game.Words = append(game.Words, w)
+			game.GameState.Revealed = append(game.GameState.Revealed, false)
 		}
 	}
 	return game

@@ -5,6 +5,10 @@ import WordSetToggle from '~/ui/wordset_toggle';
 import TimerSettings from '~/ui/timer_settings';
 import OriginalWords from '~/words.json';
 
+// TODO:
+// Hide all the word settings inside of a 'random words' wrapper
+// Show selectedWordSets / setSelectedWordSets etc.
+
 export const Lobby = ({ defaultGameID }) => {
   const [newGameName, setNewGameName] = React.useState(defaultGameID);
   const [selectedWordSets, setSelectedWordSets] = React.useState([

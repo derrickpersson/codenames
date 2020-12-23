@@ -164,7 +164,7 @@ func (s *Server) handleGameState(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// POST /guess
+// POST /next-word
 func (s *Server) handleNextWord(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
 		GameID  string `json:"game_id"`
@@ -219,6 +219,7 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		CreateNew       bool     `json:"create_new"`
 		TimerDurationMS int64    `json:"timer_duration_ms"`
 		EnforceTimer    bool     `json:"enforce_timer"`
+		RandomWords     bool     `json:"random_words"`
 	}
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
@@ -226,12 +227,14 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	wordSet := map[string]bool{}
-	for _, w := range request.WordSet {
-		wordSet[strings.TrimSpace(strings.ToUpper(w))] = true
-	}
-	if len(wordSet) > 0 && len(wordSet) < 25 {
-		http.Error(rw, "Need at least 25 words", 400)
-		return
+	if request.RandomWords {
+		for _, w := range request.WordSet {
+			wordSet[strings.TrimSpace(strings.ToUpper(w))] = true
+		}
+		if len(wordSet) > 0 && len(wordSet) < 25 {
+			http.Error(rw, "Need at least 25 words", 400)
+			return
+		}
 	}
 
 	var gh *GameHandle
@@ -239,18 +242,24 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		words := s.defaultWords
-		if len(wordSet) > 0 {
-			words = nil
-			for w := range wordSet {
-				words = append(words, w)
+		words := make([]string, 0)
+
+		if request.RandomWords {
+			words = s.defaultWords
+			// If no words have been set from the wordSet => use defaultWords
+			if len(wordSet) > 0 {
+				words = nil
+				for w := range wordSet {
+					words = append(words, w)
+				}
+				sort.Strings(words)
 			}
-			sort.Strings(words)
 		}
 
 		opts := GameOptions{
 			TimerDurationMS: request.TimerDurationMS,
 			EnforceTimer:    request.EnforceTimer,
+			RandomWords:     request.RandomWords,
 		}
 
 		var ok bool
