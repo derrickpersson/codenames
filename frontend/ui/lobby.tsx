@@ -14,9 +14,7 @@ export const Lobby = ({ defaultGameID }) => {
   const [playerName, setPlayerName] = React.useState('');
   const [newGameName, setNewGameName] = React.useState(defaultGameID);
   const [enableRandomWords, setEnableRandomWords] = React.useState(false);
-  const [selectedWordSets, setSelectedWordSets] = React.useState([
-    'English (Original)',
-  ]);
+  const [selectedWordSets, setSelectedWordSets] = React.useState(['English']);
   const [customWordsText, setCustomWordsText] = React.useState('');
   const [words, setWords] = React.useState({ ...OriginalWords, Custom: [] });
   const [warning, setWarning] = React.useState(null);
