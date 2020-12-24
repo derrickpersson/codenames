@@ -324,6 +324,26 @@ func (s *Server) handleEndTurn(rw http.ResponseWriter, req *http.Request) {
 	writeGame(rw, gh)
 }
 
+// POST /start-game
+func (s *Server) handleStartGame(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID string `json:"game_id"`
+	}
+
+	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+
+	gh.update(func(g *Game) bool {
+		g.MoveToNextStage()
+		return true
+	})
+	writeGame(rw, gh)
+}
+
 func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
 		GameID          string   `json:"game_id"`
@@ -502,9 +522,10 @@ func (s *Server) Start(games map[string]*Game) error {
 	s.mux.HandleFunc("/end-turn", s.handleEndTurn)
 	s.mux.HandleFunc("/next-word", s.handleNextWord)
 	s.mux.HandleFunc("/game-state", s.handleGameState)
+	s.mux.HandleFunc("/start-game", s.handleStartGame)
+	// TODO: use typical RESTful pattern (i.e. POST /player, PUT /player, DELETE /player )
 	s.mux.HandleFunc("/add-word", s.handleAddWord)
 	s.mux.HandleFunc("/delete-word", s.handleDeleteWord)
-	// TODO: use typical RESTful pattern (i.e. POST /player, PUT /player, DELETE /player )
 	s.mux.HandleFunc("/add-player", s.handleAddPlayer)
 	s.mux.HandleFunc("/change-player", s.handlePlayerChange)
 	s.mux.HandleFunc("/delete-player", s.handlePlayerDelete)

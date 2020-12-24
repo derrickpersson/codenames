@@ -18,7 +18,7 @@
     "react-dom": "^16.8.6"
   },
   "scripts": {
-    "start": "parcel watch app.tsx game.css lobby.css",
+    "start": "parcel watch app.tsx game.css lobby.css game_setup.css",
     "build": "./build.sh"
   },
   "husky": {

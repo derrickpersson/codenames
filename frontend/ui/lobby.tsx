@@ -1,14 +1,9 @@
 import * as React from 'react';
 import axios from 'axios';
-import CustomWords from '~/ui/custom_words';
 import WordSetToggle from '~/ui/wordset_toggle';
 import TimerSettings from '~/ui/timer_settings';
 import OriginalWords from '~/words.json';
 import Toggle from '~/ui/toggle';
-
-// TODO:
-// Hide all the word settings inside of a 'random words' wrapper
-// Show selectedWordSets / setSelectedWordSets etc.
 
 export const Lobby = ({ defaultGameID }) => {
   const [playerName, setPlayerName] = React.useState('');
@@ -54,7 +49,7 @@ export const Lobby = ({ defaultGameID }) => {
         timer_duration_ms:
           timer && timer.length ? timer[0] * 60 * 1000 + timer[1] * 1000 : 0,
         enforce_timer: true,
-        playerName,
+        player_name: playerName,
       })
       .then(() => {
         const newURL = (document.location.pathname = '/' + newGameName);

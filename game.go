@@ -111,9 +111,6 @@ func (gs GameState) anyRevealed() bool {
 }
 
 func randomState(words []string) GameState {
-	for _, w := range words {
-		fmt.Println("Has word: " + w)
-	}
 	return GameState{
 		Seed:      rand.Int63(),
 		PermIndex: 0,
@@ -148,7 +145,7 @@ type Game struct {
 	GameOptions
 	TeamPlayers   []TeamPlayer `json:"team_players,omitempty"`
 	Stage         GameStage    `json:"stage"`
-	TeamPoints    []TeamPoint  `json:"team_points,omitempty"`
+	TeamPoints    []TeamPoint  `json:"team_points"`
 	CurrentPlayer int          `json:"current_player"`
 	RoutingOrder  []TeamPlayer `json:"routing_order"`
 	CurrentWord   string       `json:"current_word"`
@@ -238,7 +235,7 @@ func (g *Game) setWinningTeam() {
 	g.WinningTeam = &topTeam
 }
 
-func (g *Game) moveToNextStage() {
+func (g *Game) MoveToNextStage() {
 	if g.Stage == Gestures {
 		g.setWinningTeam()
 	} else {
@@ -271,7 +268,7 @@ func (g *Game) GetNextWord(correct bool) {
 	availableWords := g.getAvailableWords()
 
 	if len(availableWords) == 0 {
-		g.moveToNextStage()
+		g.MoveToNextStage()
 	} else {
 		idx := rand.Intn(len(availableWords))
 
