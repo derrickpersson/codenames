@@ -17,6 +17,7 @@ interface State {
   game: IGame;
   mounted: boolean;
   mode: GameMode;
+  currentPlayerName: string;
 }
 
 const defaultFavicon =
@@ -34,6 +35,7 @@ export class Game extends React.Component<Props, State> {
       game: null,
       mounted: true,
       mode: 'game',
+      currentPlayerName: '',
     };
     this.handleAddWord.bind(this);
     this.handleChangePlayerTeam.bind(this);
@@ -93,6 +95,10 @@ export class Game extends React.Component<Props, State> {
       .then(({ data }) => {
         this.setState((oldState) => {
           const stateToUpdate = { game: data };
+          if (oldState.currentPlayerName === '') {
+            // Defaults to setting who ever joins to be the first player in the game.
+            stateToUpdate.currentPlayerName = data.team_players[0].player_name;
+          }
           return stateToUpdate;
         });
       })
@@ -238,7 +244,7 @@ export class Game extends React.Component<Props, State> {
         player_name: name,
       })
       .then(({ data }) => {
-        this.setState({ game: data });
+        this.setState({ game: data, currentPlayerName: name });
       });
   }
 
@@ -352,6 +358,10 @@ export class Game extends React.Component<Props, State> {
               currentStage={this.state.game.stage}
               currentPlayer={
                 this.state.game.routing_order[this.state.game.current_player]
+              }
+              isYourTurn={
+                this.state.game.routing_order[this.state.game.current_player]
+                  ?.player_name === this.state.currentPlayerName
               }
               scores={this.state.game.team_points}
               remaining={remaining()}

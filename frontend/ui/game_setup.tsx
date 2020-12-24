@@ -28,6 +28,7 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
   handleAddPlayer,
   moveToNextStage,
 }) => {
+  const [privateWords, setPrivateWords] = React.useState([]);
   const [wordInput, setWordInput] = React.useState('');
   const [playerInput, setPlayerInput] = React.useState('');
   const teamComposition = players.reduce(
@@ -45,7 +46,7 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
         <div className="column">
           <div>Words: ({words.length} total)</div>
           <div>
-            {words.map((word, idx) => (
+            {privateWords.map((word, idx) => (
               <div key={`${word}-${idx}`} className="tile">
                 {word}
                 <button
@@ -71,6 +72,7 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
               onClick={(e) => {
                 handleAddWord(e, wordInput);
                 setWordInput('');
+                setPrivateWords([...privateWords, wordInput]);
               }}
             >
               Add Phrase

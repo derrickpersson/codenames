@@ -8,6 +8,7 @@ interface GameTurnProps {
   currentPlayer: IPlayer;
   scores: TeamPoint[];
   remaining: number;
+  isYourTurn: boolean;
 }
 
 // Display current scores
@@ -24,6 +25,7 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
   currentPlayer,
   scores = [],
   remaining,
+  isYourTurn = false,
 }) => {
   const currentStageName = (current) => {
     switch (current) {
@@ -45,6 +47,7 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
       return `only ${remaining} left!`;
     }
   };
+  console.log('Is your turn', isYourTurn);
 
   return (
     <div>
@@ -55,8 +58,8 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
         <p>Remaining: {remainingCopy(remaining)}</p>
       </div>
       <div>
-        {scores.map((score) => (
-          <div>
+        {scores.map((score, idx) => (
+          <div key={`${score.team}-${idx}`}>
             {score.team} has {score.points}
           </div>
         ))}
@@ -67,25 +70,27 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
           className={`tile ${currentPlayer.team}`}
           aria-label={currentPlayer.team}
         >
-          {currentPlayer.player_name}
+          {isYourTurn ? 'You' : currentPlayer.player_name}
         </div>
       </div>
-      <div>
-        Current Word:
-        <div className={'tile'} style={{ fontSize: '1.5em' }}>
-          {currentWord}
+      {isYourTurn && (
+        <div>
+          Current Word:
+          <div className={'tile'} style={{ fontSize: '1.5em' }}>
+            {currentWord}
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+            }}
+          >
+            <button onClick={(e) => handleGetNextWord(e, false)}>Pass</button>
+            <button onClick={(e) => handleGetNextWord(e, true)}>Correct</button>
+          </div>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-around',
-          }}
-        >
-          <button onClick={(e) => handleGetNextWord(e, false)}>Pass</button>
-          <button onClick={(e) => handleGetNextWord(e, true)}>Correct</button>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
