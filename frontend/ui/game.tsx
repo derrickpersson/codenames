@@ -4,6 +4,8 @@ import { Settings, SettingsButton, SettingsPanel } from '~/ui/settings';
 import Timer from '~/ui/timer';
 import GameSetup from '~/ui/game_setup';
 import { IGame } from '~/ui/models';
+import GameTurn from '~/ui/game_turn';
+import StageEnd from './stage_end';
 
 type GameMode = 'game' | 'spymaster';
 
@@ -127,7 +129,7 @@ export class Game extends React.Component<Props, State> {
     return this.state.game.starting_team == 'red' ? 'blue' : 'red';
   }
 
-  public remaining(color) {
+  public remaining() {
     var count = 0;
     for (var i = 0; i < this.state.game.revealed.length; i++) {
       if (this.state.game.revealed[i]) {
@@ -251,6 +253,8 @@ export class Game extends React.Component<Props, State> {
   }
 
   render() {
+    const interstitialStages = [1, 3, 5];
+
     if (!this.state.game) {
       return <p className="loading">Loading&hellip;</p>;
     }
@@ -302,7 +306,9 @@ export class Game extends React.Component<Props, State> {
             this.state.game.enforce_timer && this.endTurn();
           }}
           freezeTimer={
-            !!this.state.game.winning_team || this.state.game.stage === 0
+            !!this.state.game.winning_team ||
+            interstitialStages.includes(this.state.game.stage) ||
+            this.state.game.stage === 0
           }
         />
       </div>
@@ -328,6 +334,15 @@ export class Game extends React.Component<Props, State> {
             handleAddPlayer={(e, name) => this.handleAddPlayer(e, name)}
           />
         )}
+        {interstitialStages.includes(this.state.game.stage) && (
+          <StageEnd
+            moveToNextStage={(e) => this.handleNextStage(e)}
+            currentStage={this.state.game.stage}
+            scores={this.state.game.team_points}
+          />
+        )}
+
+        {this.state.game.stage !== 0 && <GameTurn />}
         <form id="mode-toggle" role="radiogroup">
           <button onClick={(e) => this.nextGame(e)} id="next-game-btn">
             Next game

@@ -14,8 +14,11 @@ type GameStage int
 
 const (
 	Setup GameStage = iota
+	EndSetup
 	Explain
+	EndExplain
 	OneWord
+	EndOneWord
 	Gestures
 )
 
@@ -27,6 +30,12 @@ func (s GameStage) String() string {
 		return "oneword"
 	case Gestures:
 		return "gestures"
+	case EndSetup:
+		return "endsetup"
+	case EndExplain:
+		return "endexplain"
+	case EndOneWord:
+		return "endOneWord"
 	default:
 		return "setup"
 	}
