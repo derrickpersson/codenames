@@ -21,9 +21,9 @@ const StageEnd: React.FunctionalComponent<StageEndProps> = ({
       case 1:
         return 'Explain';
       case 3:
-        return 'One Word';
-      case 5:
         return 'Gestures';
+      case 5:
+        return 'One Word';
     }
   };
 

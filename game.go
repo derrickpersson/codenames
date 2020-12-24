@@ -17,9 +17,10 @@ const (
 	EndSetup
 	Explain
 	EndExplain
+	Gestures
+	EndGestures
 	OneWord
 	EndOneWord
-	Gestures
 )
 
 func (s GameStage) String() string {
@@ -36,6 +37,8 @@ func (s GameStage) String() string {
 		return "endexplain"
 	case EndOneWord:
 		return "endOneWord"
+	case EndGestures:
+		return "endGestures"
 	default:
 		return "setup"
 	}

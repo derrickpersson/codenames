@@ -32,9 +32,9 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
       case 2:
         return 'Explain';
       case 4:
-        return 'One Word';
-      case 6:
         return 'Gestures';
+      case 6:
+        return 'One Word';
     }
   };
 
@@ -47,7 +47,6 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
       return `only ${remaining} left!`;
     }
   };
-  console.log('Is your turn', isYourTurn);
 
   return (
     <div>
@@ -57,10 +56,10 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
         </p>
         <p>Remaining: {remainingCopy(remaining)}</p>
       </div>
-      <div>
+      <div style={{ margin: '2em 0' }}>
         {scores.map((score, idx) => (
-          <div key={`${score.team}-${idx}`}>
-            {score.team} has {score.points}
+          <div key={`${score.team}-${idx}`} style={{ margin: '1em 0' }}>
+            {score.team} has <strong>{score.points}</strong> points
           </div>
         ))}
       </div>
@@ -69,6 +68,7 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
         <div
           className={`tile ${currentPlayer.team}`}
           aria-label={currentPlayer.team}
+          style={{ margin: '1em' }}
         >
           {isYourTurn ? 'You' : currentPlayer.player_name}
         </div>
@@ -86,8 +86,18 @@ const GameTurn: React.FunctionalComponent<GameTurnProps> = ({
               justifyContent: 'space-around',
             }}
           >
-            <button onClick={(e) => handleGetNextWord(e, false)}>Pass</button>
-            <button onClick={(e) => handleGetNextWord(e, true)}>Correct</button>
+            <button
+              className="action-button pass"
+              onClick={(e) => handleGetNextWord(e, false)}
+            >
+              Pass
+            </button>
+            <button
+              className="action-button correct"
+              onClick={(e) => handleGetNextWord(e, true)}
+            >
+              Correct
+            </button>
           </div>
         </div>
       )}
