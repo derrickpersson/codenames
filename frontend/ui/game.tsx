@@ -249,7 +249,7 @@ export class Game extends React.Component<Props, State> {
   }
 
   render() {
-    const interstitialStages = [1, 3, 5];
+    const interstitialStages = [1, 3, 5, 7];
     const remaining = () => {
       var count = 0;
       for (var i = 0; i < this.state.game.revealed.length; i++) {
@@ -351,7 +351,8 @@ export class Game extends React.Component<Props, State> {
         )}
 
         {!interstitialStages.includes(this.state.game.stage) &&
-          this.state.game.stage !== 0 && (
+          this.state.game.stage !== 0 &&
+          !this.state.game.winning_team && (
             <GameTurn
               handleGetNextWord={(e, correct) => this.nextWord(e, correct)}
               currentWord={this.state.game.current_word}
@@ -367,6 +368,14 @@ export class Game extends React.Component<Props, State> {
               remaining={remaining()}
             />
           )}
+        {!!this.state.game.winning_team && (
+          <div>
+            drumroll.....
+            <div>
+              The winner is: <strong>{this.state.game.winning_team}</strong>
+            </div>
+          </div>
+        )}
         <form id="mode-toggle" role="radiogroup">
           <button onClick={(e) => this.nextGame(e)} id="next-game-btn">
             Next game

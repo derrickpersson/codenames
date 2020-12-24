@@ -254,13 +254,14 @@ func (g *Game) setWinningTeam() {
 }
 
 func (g *Game) MoveToNextStage() {
-	if g.Stage == Gestures {
+	if g.Stage == OneWord {
 		g.setWinningTeam()
 	} else {
 		g.Stage++
 		g.GameState.Revealed = make([]bool, len(g.Words))
 		g.CurrentWord = ""
 	}
+	g.UpdatedAt = time.Now()
 }
 
 func (g *Game) getAvailableWords() []string {

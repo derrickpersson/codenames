@@ -33,8 +33,8 @@ const StageEnd: React.FunctionalComponent<StageEndProps> = ({
         Next Stage: <strong>{nextStage(currentStage)}</strong>
       </div>
       <div>
-        {scores.map((score) => (
-          <div>
+        {scores.map((score, idx) => (
+          <div key={`${score.team}-${idx}`}>
             {score.team} has {score.points}
           </div>
         ))}
