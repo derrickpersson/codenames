@@ -221,6 +221,7 @@ func (g *Game) NextTurn(currentTurn int) bool {
 	g.UpdatedAt = time.Now()
 	g.Round++
 	g.getNextPlayer()
+	g.GetNextWord(false)
 	g.RoundStartedAt = time.Now()
 	return true
 }
