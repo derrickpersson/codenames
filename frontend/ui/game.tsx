@@ -129,16 +129,6 @@ export class Game extends React.Component<Props, State> {
     return this.state.game.starting_team == 'red' ? 'blue' : 'red';
   }
 
-  public remaining() {
-    var count = 0;
-    for (var i = 0; i < this.state.game.revealed.length; i++) {
-      if (this.state.game.revealed[i]) {
-        count++;
-      }
-    }
-    return count;
-  }
-
   public endTurn() {
     axios
       .post('/end-turn', {
@@ -254,6 +244,15 @@ export class Game extends React.Component<Props, State> {
 
   render() {
     const interstitialStages = [1, 3, 5];
+    const remaining = () => {
+      var count = 0;
+      for (var i = 0; i < this.state.game.revealed.length; i++) {
+        if (!this.state.game.revealed[i]) {
+          count++;
+        }
+      }
+      return count;
+    };
 
     if (!this.state.game) {
       return <p className="loading">Loading&hellip;</p>;
@@ -336,13 +335,28 @@ export class Game extends React.Component<Props, State> {
         )}
         {interstitialStages.includes(this.state.game.stage) && (
           <StageEnd
-            moveToNextStage={(e) => this.handleNextStage(e)}
+            moveToNextStage={(e) => {
+              this.handleNextStage(e);
+              this.nextWord(e, false);
+            }}
             currentStage={this.state.game.stage}
             scores={this.state.game.team_points}
           />
         )}
 
-        {this.state.game.stage !== 0 && <GameTurn />}
+        {!interstitialStages.includes(this.state.game.stage) &&
+          this.state.game.stage !== 0 && (
+            <GameTurn
+              handleGetNextWord={(e, correct) => this.nextWord(e, correct)}
+              currentWord={this.state.game.current_word}
+              currentStage={this.state.game.stage}
+              currentPlayer={
+                this.state.game.routing_order[this.state.game.current_player]
+              }
+              scores={this.state.game.team_points}
+              remaining={remaining()}
+            />
+          )}
         <form id="mode-toggle" role="radiogroup">
           <button onClick={(e) => this.nextGame(e)} id="next-game-btn">
             Next game

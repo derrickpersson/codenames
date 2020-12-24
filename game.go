@@ -166,8 +166,8 @@ type TeamPlayer struct {
 }
 
 type TeamPoint struct {
-	team   Team
-	points int
+	Team   Team `json:"team"`
+	Points int  `json:"points"`
 }
 
 type GameOptions struct {
@@ -223,22 +223,27 @@ func (g *Game) NextTurn(currentTurn int) bool {
 }
 
 func (g *Game) updateTeamScore(team Team) {
+	newTeamPoints := make([]TeamPoint, 0)
 	for _, t := range g.TeamPoints {
-		if t.team == team {
-			t.points++
+		if t.Team == team {
+			t.Points++
 		}
+		newTeamPoints = append(newTeamPoints, t)
 	}
+	g.TeamPoints = append(newTeamPoints)
+
+	g.UpdatedAt = time.Now()
 }
 
 func (g *Game) setWinningTeam() {
 	var topPoints = 0
 	var topTeam = Neutral
 	for _, t := range g.TeamPoints {
-		if t.points == topPoints {
+		if t.Points == topPoints {
 			topTeam = Neutral
-		} else if t.points > topPoints {
-			topPoints = t.points
-			topTeam = t.team
+		} else if t.Points > topPoints {
+			topPoints = t.Points
+			topTeam = t.Team
 		}
 	}
 	g.WinningTeam = &topTeam
@@ -469,6 +474,16 @@ func newGame(id string, state GameState, opts GameOptions) *Game {
 		RoutingOrder:   make([]TeamPlayer, 0, 0),
 		CurrentWord:    ``,
 	}
+
+	game.TeamPoints = append(game.TeamPoints, TeamPoint{
+		Team:   game.StartingTeam,
+		Points: 0,
+	})
+
+	game.TeamPoints = append(game.TeamPoints, TeamPoint{
+		Team:   game.StartingTeam.Other(),
+		Points: 0,
+	})
 
 	if opts.RandomWords {
 		// Pick the next `wordsPerGame` words from the
