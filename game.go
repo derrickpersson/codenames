@@ -10,13 +10,46 @@ import (
 
 const wordsPerGame = 25
 
+type GameStage int
+
+const (
+	Setup GameStage = iota
+	EndSetup
+	Explain
+	EndExplain
+	Gestures
+	EndGestures
+	OneWord
+	EndOneWord
+)
+
+func (s GameStage) String() string {
+	switch s {
+	case Explain:
+		return "explain"
+	case OneWord:
+		return "oneword"
+	case Gestures:
+		return "gestures"
+	case EndSetup:
+		return "endsetup"
+	case EndExplain:
+		return "endexplain"
+	case EndOneWord:
+		return "endOneWord"
+	case EndGestures:
+		return "endGestures"
+	default:
+		return "setup"
+	}
+}
+
 type Team int
 
 const (
-	Neutral Team = iota
-	Red
-	Blue
-	Black
+	Red  Team = iota // 0
+	Blue             // 1
+	Neutral
 )
 
 func (t Team) String() string {
@@ -25,8 +58,6 @@ func (t Team) String() string {
 		return "red"
 	case Blue:
 		return "blue"
-	case Black:
-		return "black"
 	default:
 		return "neutral"
 	}
@@ -54,8 +85,6 @@ func (t *Team) UnmarshalJSON(b []byte) error {
 		*t = Red
 	case "blue":
 		*t = Blue
-	case "black":
-		*t = Black
 	default:
 		*t = Neutral
 	}
@@ -98,7 +127,7 @@ func randomState(words []string) GameState {
 		Seed:      rand.Int63(),
 		PermIndex: 0,
 		Round:     0,
-		Revealed:  make([]bool, wordsPerGame),
+		Revealed:  make([]bool, 0),
 		WordSet:   words,
 	}
 }
@@ -110,7 +139,7 @@ func nextGameState(state GameState) GameState {
 		state.Seed = rand.Int63()
 		state.PermIndex = 0
 	}
-	state.Revealed = make([]bool, wordsPerGame)
+	state.Revealed = make([]bool, 0)
 	state.Round = 0
 	return state
 }
@@ -126,11 +155,28 @@ type Game struct {
 	Layout         []Team    `json:"layout"`
 	RoundStartedAt time.Time `json:"round_started_at,omitempty"`
 	GameOptions
+	TeamPlayers   []TeamPlayer `json:"team_players,omitempty"`
+	Stage         GameStage    `json:"stage"`
+	TeamPoints    []TeamPoint  `json:"team_points"`
+	CurrentPlayer int          `json:"current_player"`
+	RoutingOrder  []TeamPlayer `json:"routing_order"`
+	CurrentWord   string       `json:"current_word"`
+}
+
+type TeamPlayer struct {
+	Team       Team   `json:"team"`
+	PlayerName string `json:"player_name"`
+}
+
+type TeamPoint struct {
+	Team   Team `json:"team"`
+	Points int  `json:"points"`
 }
 
 type GameOptions struct {
 	TimerDurationMS int64 `json:"timer_duration_ms,omitempty"`
 	EnforceTimer    bool  `json:"enforce_timer,omitempty"`
+	RandomWords     bool  `json:"random_words,omitempty"`
 }
 
 func (g *Game) StateID() string {
@@ -174,39 +220,258 @@ func (g *Game) NextTurn(currentTurn int) bool {
 	}
 	g.UpdatedAt = time.Now()
 	g.Round++
+	g.getNextPlayer()
+	g.GetNextWord(false)
 	g.RoundStartedAt = time.Now()
 	return true
 }
 
-func (g *Game) Guess(idx int) error {
-	if idx > len(g.Layout) || idx < 0 {
-		return fmt.Errorf("index %d is invalid", idx)
+func (g *Game) updateTeamScore(team Team) {
+	newTeamPoints := make([]TeamPoint, 0)
+	for _, t := range g.TeamPoints {
+		if t.Team == team {
+			t.Points++
+		}
+		newTeamPoints = append(newTeamPoints, t)
 	}
-	if g.Revealed[idx] {
-		return errors.New("cell has already been revealed")
+	g.TeamPoints = append(newTeamPoints)
+
+	g.UpdatedAt = time.Now()
+}
+
+func (g *Game) setWinningTeam() {
+	var topPoints = 0
+	var topTeam = Neutral
+	for _, t := range g.TeamPoints {
+		if t.Points == topPoints {
+			topTeam = Neutral
+		} else if t.Points > topPoints {
+			topPoints = t.Points
+			topTeam = t.Team
+		}
+	}
+	g.WinningTeam = &topTeam
+}
+
+func (g *Game) MoveToNextStage() {
+	if g.Stage == OneWord {
+		g.setWinningTeam()
+	} else {
+		g.Stage++
+		g.GameState.Revealed = make([]bool, len(g.Words))
+		g.CurrentWord = ""
 	}
 	g.UpdatedAt = time.Now()
-	g.Revealed[idx] = true
-
-	if g.Layout[idx] == Black {
-		winners := g.currentTeam().Other()
-		g.WinningTeam = &winners
-		return nil
-	}
-
-	g.checkWinningCondition()
-	if g.Layout[idx] != g.currentTeam() {
-		g.Round = g.Round + 1
-		g.RoundStartedAt = time.Now()
-	}
-	return nil
 }
+
+func (g *Game) getAvailableWords() []string {
+	availableWords := make([]string, 0)
+	for idx, item := range g.Words {
+		if !g.GameState.Revealed[idx] {
+			availableWords = append(availableWords, item)
+		}
+	}
+	return availableWords
+}
+
+func (g *Game) GetNextWord(correct bool) {
+	if correct {
+		g.updateTeamScore(g.currentTeam())
+		for idx, value := range g.Words {
+			if value == g.CurrentWord {
+				g.GameState.Revealed[idx] = true
+			}
+		}
+	}
+
+	availableWords := g.getAvailableWords()
+
+	if len(availableWords) == 0 {
+		g.MoveToNextStage()
+	} else {
+		idx := rand.Intn(len(availableWords))
+
+		pick := availableWords[idx]
+
+		g.CurrentWord = pick
+	}
+	g.UpdatedAt = time.Now()
+}
+
+// func (g *Game) Guess(idx int) error {
+// 	if idx > len(g.Layout) || idx < 0 {
+// 		return fmt.Errorf("index %d is invalid", idx)
+// 	}
+// 	if g.Revealed[idx] {
+// 		return errors.New("cell has already been revealed")
+// 	}
+// 	g.UpdatedAt = time.Now()
+// 	g.Revealed[idx] = true
+
+// 	g.checkWinningCondition()
+// 	if g.Layout[idx] != g.currentTeam() {
+// 		g.Round = g.Round + 1
+// 		g.RoundStartedAt = time.Now()
+// 	}
+// 	return nil
+// }
 
 func (g *Game) currentTeam() Team {
 	if g.Round%2 == 0 {
 		return g.StartingTeam
 	}
 	return g.StartingTeam.Other()
+}
+
+func (g *Game) AddWord(word string) error {
+	if g.Stage == Setup {
+		g.UpdatedAt = time.Now()
+		g.Words = append(g.Words, word)
+		g.GameState.Revealed = append(g.GameState.Revealed, false)
+	} else {
+		return errors.New("can't add words when past the setup stage")
+	}
+	return nil
+}
+
+func (g *Game) DeleteWord(word string) error {
+	if g.Stage == Setup {
+		wordIdx := findWordIndex(g.Words, word)
+		if wordIdx == -1 {
+			return errors.New("Player not found")
+		}
+		g.Words[len(g.Words)-1], g.Words[wordIdx] = g.Words[wordIdx], g.Words[len(g.Words)-1]
+		g.GameState.Revealed[len(g.GameState.Revealed)-1], g.GameState.Revealed[wordIdx] = g.GameState.Revealed[wordIdx], g.GameState.Revealed[len(g.GameState.Revealed)-1]
+		g.UpdatedAt = time.Now()
+		g.Words = g.Words[:len(g.Words)-1]
+		g.GameState.Revealed = g.GameState.Revealed[:len(g.GameState.Revealed)-1]
+	}
+	return nil
+}
+
+func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
+	turnOrder := make([]TeamPlayer, 0)
+
+	teamRed := make([]TeamPlayer, 0)
+	teamBlue := make([]TeamPlayer, 0)
+
+	for idx, tp := range teamPlayers {
+		if tp.Team == Red {
+			teamRed = append(teamRed, teamPlayers[idx])
+		} else if tp.Team == Blue {
+			teamBlue = append(teamBlue, teamPlayers[idx])
+		}
+	}
+
+	rotationLength := len(teamRed) * len(teamBlue) * 2
+	count := g.StartingTeam
+	blueCount := 0
+	redCount := 0
+
+	for len(turnOrder) < rotationLength {
+		if count%2 == 0 {
+			if len(teamRed) > 0 {
+				redIdx := redCount % len(teamRed)
+				turnOrder = append(turnOrder, teamRed[redIdx])
+				redCount++
+			}
+		} else {
+			if len(teamBlue) > 0 {
+				blueIdx := blueCount % len(teamBlue)
+				turnOrder = append(turnOrder, teamBlue[blueIdx])
+				blueCount++
+			}
+		}
+		count++
+	}
+	return turnOrder
+}
+
+func (g *Game) UpdatePlayer(oldPlayerName string, team Team, updatedName string) error {
+	if err := g.DeletePlayer(oldPlayerName); err != nil {
+		return err
+	}
+
+	newName := oldPlayerName
+
+	if len(updatedName) > 0 {
+		newName = updatedName
+	}
+
+	if err := g.AddPlayer(TeamPlayer{PlayerName: newName, Team: team}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Game) AddPlayer(player TeamPlayer) error {
+	if g.Stage == Setup {
+		// Check for unique name ?
+		g.UpdatedAt = time.Now()
+		g.TeamPlayers = append(g.TeamPlayers, player)
+		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
+	} else {
+		return errors.New("can't add players when past the setup stage")
+	}
+	return nil
+}
+
+func findWordIndex(s []string, search string) int {
+	for idx, item := range s {
+		if item == search {
+			return idx
+		}
+	}
+	return -1
+}
+
+func findPlayerIndex(s []TeamPlayer, search string) int {
+	for idx, item := range s {
+		if item.PlayerName == search {
+			return idx
+		}
+	}
+	return -1
+}
+
+func (g *Game) ChangePlayerTeam(name string, team Team) error {
+	if err := g.DeletePlayer(name); err != nil {
+		return err
+	}
+	if err := g.AddPlayer(TeamPlayer{PlayerName: name, Team: team}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (g *Game) GetRandomTeam() Team {
+	randRnd := rand.New(rand.NewSource(rand.Int63()))
+	randomTeam := Team(randRnd.Intn(2)) + Red
+	return randomTeam
+}
+
+func (g *Game) DeletePlayer(name string) error {
+	if g.Stage == Setup {
+		playerIdx := findPlayerIndex(g.TeamPlayers, name)
+		if playerIdx == -1 {
+			return errors.New("Player not found")
+		}
+		g.TeamPlayers[len(g.TeamPlayers)-1], g.TeamPlayers[playerIdx] = g.TeamPlayers[playerIdx], g.TeamPlayers[len(g.TeamPlayers)-1]
+		g.UpdatedAt = time.Now()
+		g.TeamPlayers = g.TeamPlayers[:len(g.TeamPlayers)-1]
+		g.RoutingOrder = g.createRoutingOrder(g.TeamPlayers)
+	} else {
+		return errors.New("can't remove players when past the setup stage")
+	}
+	return nil
+}
+
+func (g *Game) getNextPlayer() {
+	if g.CurrentPlayer+1 == len(g.RoutingOrder) {
+		g.CurrentPlayer = 0
+	} else {
+		g.CurrentPlayer++
+	}
 }
 
 func newGame(id string, state GameState, opts GameOptions) *Game {
@@ -220,35 +485,39 @@ func newGame(id string, state GameState, opts GameOptions) *Game {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 		StartingTeam:   Team(randRnd.Intn(2)) + Red,
-		Words:          make([]string, 0, wordsPerGame),
-		Layout:         make([]Team, 0, wordsPerGame),
+		Words:          make([]string, 0),
 		GameState:      state,
 		RoundStartedAt: time.Now(),
 		GameOptions:    opts,
+		TeamPlayers:    make([]TeamPlayer, 0, 0),
+		Stage:          Setup,
+		TeamPoints:     make([]TeamPoint, 0, 2),
+		CurrentPlayer:  0, // Circular array reference indx for routingOrder
+		RoutingOrder:   make([]TeamPlayer, 0, 0),
+		CurrentWord:    ``,
 	}
 
-	// Pick the next `wordsPerGame` words from the
-	// randomly generated permutation
-	perm := seedRnd.Perm(len(state.WordSet))
-	permIndex := state.PermIndex
-	for _, i := range perm[permIndex : permIndex+wordsPerGame] {
-		w := state.WordSet[perm[i]]
-		game.Words = append(game.Words, w)
-	}
+	game.TeamPoints = append(game.TeamPoints, TeamPoint{
+		Team:   game.StartingTeam,
+		Points: 0,
+	})
 
-	// Pick a random permutation of team assignments.
-	var teamAssignments []Team
-	teamAssignments = append(teamAssignments, Red.Repeat(8)...)
-	teamAssignments = append(teamAssignments, Blue.Repeat(8)...)
-	teamAssignments = append(teamAssignments, Neutral.Repeat(7)...)
-	teamAssignments = append(teamAssignments, Black)
-	teamAssignments = append(teamAssignments, game.StartingTeam)
+	game.TeamPoints = append(game.TeamPoints, TeamPoint{
+		Team:   game.StartingTeam.Other(),
+		Points: 0,
+	})
 
-	shuffleCount := randRnd.Intn(5) + 5
-	for i := 0; i < shuffleCount; i++ {
-		shuffle(randRnd, teamAssignments)
+	if opts.RandomWords {
+		// Pick the next `wordsPerGame` words from the
+		// randomly generated permutation
+		perm := seedRnd.Perm(len(state.WordSet))
+		permIndex := state.PermIndex
+		for _, i := range perm[permIndex : permIndex+wordsPerGame] {
+			w := state.WordSet[perm[i]]
+			game.Words = append(game.Words, w)
+			game.GameState.Revealed = append(game.GameState.Revealed, false)
+		}
 	}
-	game.Layout = teamAssignments
 	return game
 }
 

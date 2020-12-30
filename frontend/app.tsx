@@ -7,7 +7,9 @@ export class App extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = { gameID: null };
+    this.state = {
+      gameID: null,
+    };
     if (document.location.hash) {
       this.state.gameID = document.location.hash.slice(1);
     }
@@ -28,7 +30,7 @@ export class App extends React.Component {
       <div id="application">
         <div id="topbar">
           <h1>
-            <a href={'http://' + window.location.host}>Codenames</a>
+            <a href={'http://' + window.location.host}>Bowls</a>
           </h1>
         </div>
         {pane}

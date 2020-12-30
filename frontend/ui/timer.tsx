@@ -39,7 +39,7 @@ const Timer: React.FunctionComponent<TimerProps> = ({
     return () => {
       clearTimeout(timeout);
     };
-  }, [timeRemaining]);
+  }, [freezeTimer, timeRemaining]);
 
   React.useEffect(() => {
     setTimeRemaining(getTimeRemaining(endTime));

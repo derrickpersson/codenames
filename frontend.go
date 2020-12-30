@@ -11,11 +11,12 @@ const tpl = `
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Codenames - Play Online</title>
+        <title>Bowls - Play Online</title>
         <script src="/static/app.js?v=0.02" type="text/javascript"></script>
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="/static/game.css" />
         <link rel="stylesheet" type="text/css" href="/static/lobby.css" />
+		<link rel="stylesheet" type="text/css" href="/static/game_setup.css" />
         <link rel="shortcut icon" type="image/png" id="favicon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAA8SURBVHgB7dHBDQAgCAPA1oVkBWdzPR84kW4AD0LCg36bXJqUcLL2eVY/EEwDFQBeEfPnqUpkLmigAvABK38Grs5TfaMAAAAASUVORK5CYII="/>
 
         <script type="text/javascript">
@@ -27,14 +28,13 @@ const tpl = `
     </head>
     <body>
 		<script>
-		  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-		  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-		  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-		  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+		//   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+		//   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+		//   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+		//   })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
 
-		  ga('create', 'UA-88084599-2', 'auto');
-		  ga('send', 'pageview');
-
+		//   ga('create', 'NO GA CODE', 'auto');
+		//   ga('send', 'pageview');
 		</script>
 		<div id="app">
 		</div>

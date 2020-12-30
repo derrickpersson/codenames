@@ -164,11 +164,11 @@ func (s *Server) handleGameState(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// POST /guess
-func (s *Server) handleGuess(rw http.ResponseWriter, req *http.Request) {
+// POST /next-word
+func (s *Server) handleNextWord(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
-		GameID string `json:"game_id"`
-		Index  int    `json:"index"`
+		GameID  string `json:"game_id"`
+		Correct bool   `json:"correct"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -181,13 +181,126 @@ func (s *Server) handleGuess(rw http.ResponseWriter, req *http.Request) {
 
 	var err error
 	gh.update(func(g *Game) bool {
-		err = g.Guess(request.Index)
-		return err == nil
+		g.GetNextWord(request.Correct)
+		return true
 	})
 	if err != nil {
 		http.Error(rw, err.Error(), 400)
 		return
 	}
+	writeGame(rw, gh)
+}
+
+// POST /add-word
+func (s *Server) handleAddWord(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID string `json:"game_id"`
+		Word   string `json:"word"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+
+	gh.update(func(g *Game) bool {
+		err := g.AddWord(request.Word)
+		return err == nil
+	})
+	writeGame(rw, gh)
+}
+
+// DELETE /delete-word
+func (s *Server) handleDeleteWord(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID string `json:"game_id"`
+		Word   string `json:"word"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+	gh.update(func(g *Game) bool {
+		err := g.DeleteWord(request.Word)
+		return err == nil
+	})
+	writeGame(rw, gh)
+
+}
+
+// POST /add-player
+func (s *Server) handleAddPlayer(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID     string `json:"game_id"`
+		PlayerName string `json:"player_name"`
+		Team       Team   `json:"team"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+	gh.update(func(g *Game) bool {
+		err := g.AddPlayer(TeamPlayer{
+			Team:       request.Team,
+			PlayerName: request.PlayerName,
+		})
+		return err == nil
+	})
+	writeGame(rw, gh)
+}
+
+// PUT /change-player
+func (s *Server) handlePlayerChange(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID        string `json:"game_id"`
+		PlayerName    string `json:"player_name"`
+		Team          Team   `json:"team"`
+		OldPlayerName string `json:"old_player_name"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+	gh.update(func(g *Game) bool {
+		err := g.UpdatePlayer(request.OldPlayerName, request.Team, request.PlayerName)
+		return err == nil
+	})
+	writeGame(rw, gh)
+}
+
+// DELETE /delete-player
+func (s *Server) handlePlayerDelete(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID     string `json:"game_id"`
+		PlayerName string `json:"player_name"`
+	}
+
+	decoder := json.NewDecoder(req.Body)
+	if err := decoder.Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+	gh.update(func(g *Game) bool {
+		err := g.DeletePlayer(request.PlayerName)
+		return err == nil
+	})
 	writeGame(rw, gh)
 }
 
@@ -212,6 +325,26 @@ func (s *Server) handleEndTurn(rw http.ResponseWriter, req *http.Request) {
 	writeGame(rw, gh)
 }
 
+// POST /start-game
+func (s *Server) handleStartGame(rw http.ResponseWriter, req *http.Request) {
+	var request struct {
+		GameID string `json:"game_id"`
+	}
+
+	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
+		http.Error(rw, "Error decoding", 400)
+		return
+	}
+
+	gh := s.getGame(request.GameID)
+
+	gh.update(func(g *Game) bool {
+		g.MoveToNextStage()
+		return true
+	})
+	writeGame(rw, gh)
+}
+
 func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
 		GameID          string   `json:"game_id"`
@@ -219,6 +352,8 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		CreateNew       bool     `json:"create_new"`
 		TimerDurationMS int64    `json:"timer_duration_ms"`
 		EnforceTimer    bool     `json:"enforce_timer"`
+		RandomWords     bool     `json:"random_words"`
+		PlayerName      string   `json:"player_name"`
 	}
 
 	if err := json.NewDecoder(req.Body).Decode(&request); err != nil {
@@ -226,12 +361,14 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 	wordSet := map[string]bool{}
-	for _, w := range request.WordSet {
-		wordSet[strings.TrimSpace(strings.ToUpper(w))] = true
-	}
-	if len(wordSet) > 0 && len(wordSet) < 25 {
-		http.Error(rw, "Need at least 25 words", 400)
-		return
+	if request.RandomWords {
+		for _, w := range request.WordSet {
+			wordSet[strings.TrimSpace(strings.ToUpper(w))] = true
+		}
+		if len(wordSet) > 0 && len(wordSet) < 25 {
+			http.Error(rw, "Need at least 25 words", 400)
+			return
+		}
 	}
 
 	var gh *GameHandle
@@ -239,18 +376,24 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		words := s.defaultWords
-		if len(wordSet) > 0 {
-			words = nil
-			for w := range wordSet {
-				words = append(words, w)
+		words := make([]string, 0)
+
+		if request.RandomWords {
+			words = s.defaultWords
+			// If no words have been set from the wordSet => use defaultWords
+			if len(wordSet) > 0 {
+				words = nil
+				for w := range wordSet {
+					words = append(words, w)
+				}
+				sort.Strings(words)
 			}
-			sort.Strings(words)
 		}
 
 		opts := GameOptions{
 			TimerDurationMS: request.TimerDurationMS,
 			EnforceTimer:    request.EnforceTimer,
+			RandomWords:     request.RandomWords,
 		}
 
 		var ok bool
@@ -258,6 +401,13 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 		if !ok {
 			// no game exists, create for the first time
 			gh = newHandle(newGame(request.GameID, randomState(words), opts), s.Store)
+			gh.update(func(g *Game) bool {
+				err := gh.g.AddPlayer(TeamPlayer{
+					PlayerName: request.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+				return err == nil
+			})
 			s.games[request.GameID] = gh
 		} else if request.CreateNew {
 			replacedCh := gh.replaced
@@ -266,6 +416,12 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 
 			nextState := nextGameState(gh.g.GameState)
 			gh = newHandle(newGame(request.GameID, nextState, opts), s.Store)
+			for _, player := range previousGame.TeamPlayers {
+				gh.g.AddPlayer(TeamPlayer{
+					PlayerName: player.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+			}
 			s.games[request.GameID] = gh
 
 			// signal to waiting /game-state goroutines that the
@@ -279,6 +435,14 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 			if err != nil {
 				log.Printf("Unable to delete old game %q from disk: %s\n", previousGame.ID, err)
 			}
+		} else {
+			gh.update(func(g *Game) bool {
+				err := gh.g.AddPlayer(TeamPlayer{
+					PlayerName: request.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+				return err == nil
+			})
 		}
 	}()
 	writeGame(rw, gh)
@@ -359,8 +523,15 @@ func (s *Server) Start(games map[string]*Game) error {
 	s.mux.HandleFunc("/stats", s.handleStats)
 	s.mux.HandleFunc("/next-game", s.handleNextGame)
 	s.mux.HandleFunc("/end-turn", s.handleEndTurn)
-	s.mux.HandleFunc("/guess", s.handleGuess)
+	s.mux.HandleFunc("/next-word", s.handleNextWord)
 	s.mux.HandleFunc("/game-state", s.handleGameState)
+	s.mux.HandleFunc("/start-game", s.handleStartGame)
+	// TODO: use typical RESTful pattern (i.e. POST /player, PUT /player, DELETE /player )
+	s.mux.HandleFunc("/add-word", s.handleAddWord)
+	s.mux.HandleFunc("/delete-word", s.handleDeleteWord)
+	s.mux.HandleFunc("/add-player", s.handleAddPlayer)
+	s.mux.HandleFunc("/change-player", s.handlePlayerChange)
+	s.mux.HandleFunc("/delete-player", s.handlePlayerDelete)
 	s.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/dist"))))
 	s.mux.HandleFunc("/", s.handleIndex)
 
