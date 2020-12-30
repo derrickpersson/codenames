@@ -22,11 +22,17 @@ import (
 	"github.com/pkg/errors"
 )
 
-const defaultListenAddr = ":9091"
+var defaultListenAddr = ":9091"
+
 const expiryDur = -24 * time.Hour
 
 func main() {
+	port, exists := os.LookupEnv("PORT")
 	rand.Seed(time.Now().UnixNano())
+
+	if exists {
+		defaultListenAddr = ":" + port
+	}
 
 	var bootstrapURL string
 	var listenAddr string
