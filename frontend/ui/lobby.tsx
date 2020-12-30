@@ -6,7 +6,6 @@ import OriginalWords from '~/words.json';
 import Toggle from '~/ui/toggle';
 
 export const Lobby = ({ defaultGameID }) => {
-  const [playerName, setPlayerName] = React.useState('');
   const [newGameName, setNewGameName] = React.useState(defaultGameID);
   const [enableRandomWords, setEnableRandomWords] = React.useState(false);
   const [selectedWordSets, setSelectedWordSets] = React.useState(['English']);
@@ -28,7 +27,7 @@ export const Lobby = ({ defaultGameID }) => {
 
   function handleNewGame(e) {
     e.preventDefault();
-    if (!newGameName || !playerName) {
+    if (!newGameName) {
       return;
     }
 
@@ -49,7 +48,6 @@ export const Lobby = ({ defaultGameID }) => {
         timer_duration_ms:
           timer && timer.length ? timer[0] * 60 * 1000 + timer[1] * 1000 : 0,
         enforce_timer: true,
-        player_name: playerName,
       })
       .then(() => {
         const newURL = (document.location.pathname = '/' + newGameName);
@@ -78,9 +76,9 @@ export const Lobby = ({ defaultGameID }) => {
         <form id="new-game">
           <p className="intro">
             Play bowls online with friends. To create a new game or join an
-            existing game, enter your name and a game identifier and click 'GO'.
+            existing game, enter a game identifier and click 'GO'.
           </p>
-          <input
+          {/* <input
             type="text"
             id="player-name"
             aria-label="player name"
@@ -90,7 +88,7 @@ export const Lobby = ({ defaultGameID }) => {
             }}
             value={playerName}
             placeholder={'Your name'}
-          />
+          /> */}
           <input
             type="text"
             id="game-name"
@@ -102,10 +100,7 @@ export const Lobby = ({ defaultGameID }) => {
             value={newGameName}
           />
 
-          <button
-            disabled={!newGameName.length || !playerName.length}
-            onClick={handleNewGame}
-          >
+          <button disabled={!newGameName.length} onClick={handleNewGame}>
             Go
           </button>
 

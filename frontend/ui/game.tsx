@@ -101,13 +101,13 @@ export class Game extends React.Component<Props, State> {
       .then(({ data }) => {
         this.setState((oldState) => {
           const stateToUpdate = { game: data };
-          if (oldState.currentPlayerName === '') {
-            // Defaults to setting who ever joins to be the first player in the game.
-            stateToUpdate.currentPlayerName =
-              data.team_players?.length > 0
-                ? data.team_players[0]?.player_name
-                : '';
-          }
+          // if (oldState.currentPlayerName === '') {
+          //   // Defaults to setting who ever joins to be the first player in the game.
+          //   stateToUpdate.currentPlayerName =
+          //     data.team_players?.length > 0
+          //       ? data.team_players[0]?.player_name
+          //       : '';
+          // }
           return stateToUpdate;
         });
       })
