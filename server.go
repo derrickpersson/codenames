@@ -263,9 +263,10 @@ func (s *Server) handleAddPlayer(rw http.ResponseWriter, req *http.Request) {
 // PUT /change-player
 func (s *Server) handlePlayerChange(rw http.ResponseWriter, req *http.Request) {
 	var request struct {
-		GameID     string `json:"game_id"`
-		PlayerName string `json:"player_name"`
-		Team       Team   `json:"team"`
+		GameID        string `json:"game_id"`
+		PlayerName    string `json:"player_name"`
+		Team          Team   `json:"team"`
+		OldPlayerName string `json:"old_player_name"`
 	}
 
 	decoder := json.NewDecoder(req.Body)
@@ -276,7 +277,7 @@ func (s *Server) handlePlayerChange(rw http.ResponseWriter, req *http.Request) {
 
 	gh := s.getGame(request.GameID)
 	gh.update(func(g *Game) bool {
-		err := g.ChangePlayerTeam(request.PlayerName, request.Team)
+		err := g.UpdatePlayer(request.OldPlayerName, request.Team, request.PlayerName)
 		return err == nil
 	})
 	writeGame(rw, gh)
@@ -415,10 +416,12 @@ func (s *Server) handleNextGame(rw http.ResponseWriter, req *http.Request) {
 
 			nextState := nextGameState(gh.g.GameState)
 			gh = newHandle(newGame(request.GameID, nextState, opts), s.Store)
-			gh.g.AddPlayer(TeamPlayer{
-				PlayerName: request.PlayerName,
-				Team:       gh.g.GetRandomTeam(),
-			})
+			for _, player := range previousGame.TeamPlayers {
+				gh.g.AddPlayer(TeamPlayer{
+					PlayerName: player.PlayerName,
+					Team:       gh.g.GetRandomTeam(),
+				})
+			}
 			s.games[request.GameID] = gh
 
 			// signal to waiting /game-state goroutines that the

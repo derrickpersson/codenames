@@ -110,26 +110,6 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
                 </div>
               </div>
             ))}
-            {
-              <div className="addContainer">
-                <input
-                  className="addInput"
-                  value={playerInput}
-                  onChange={(e) => setPlayerInput(e.target?.value)}
-                  placeholder="Your Name"
-                />
-                <button
-                  className="add"
-                  disabled={playerInput.length === 0}
-                  onClick={(e) => {
-                    handleAddPlayer(e, playerInput);
-                    setPlayerInput('');
-                  }}
-                >
-                  Join!
-                </button>
-              </div>
-            }
           </div>
         </div>
       </div>

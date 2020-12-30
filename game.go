@@ -387,6 +387,23 @@ func (g *Game) createRoutingOrder(teamPlayers []TeamPlayer) []TeamPlayer {
 	return turnOrder
 }
 
+func (g *Game) UpdatePlayer(oldPlayerName string, team Team, updatedName string) error {
+	if err := g.DeletePlayer(oldPlayerName); err != nil {
+		return err
+	}
+
+	newName := oldPlayerName
+
+	if len(updatedName) > 0 {
+		newName = updatedName
+	}
+
+	if err := g.AddPlayer(TeamPlayer{PlayerName: newName, Team: team}); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (g *Game) AddPlayer(player TeamPlayer) error {
 	if g.Stage == Setup {
 		// Check for unique name ?

@@ -18,6 +18,9 @@ interface State {
   mounted: boolean;
   mode: GameMode;
   currentPlayerName: string;
+  currentPlayerInput: string;
+  currentPlayerTeam: string;
+  didJoin: boolean;
 }
 
 const defaultFavicon =
@@ -36,9 +39,12 @@ export class Game extends React.Component<Props, State> {
       mounted: true,
       mode: 'game',
       currentPlayerName: '',
+      currentPlayerInput: '',
+      currentPlayerTeam: '',
+      didJoin: false,
     };
     this.handleAddWord.bind(this);
-    this.handleChangePlayerTeam.bind(this);
+    this.handleChangePlayer.bind(this);
     this.handleNextStage.bind(this);
     this.handleRemoveWord.bind(this);
     this.handleRemovePlayer.bind(this);
@@ -97,7 +103,10 @@ export class Game extends React.Component<Props, State> {
           const stateToUpdate = { game: data };
           if (oldState.currentPlayerName === '') {
             // Defaults to setting who ever joins to be the first player in the game.
-            stateToUpdate.currentPlayerName = data.team_players[0].player_name;
+            stateToUpdate.currentPlayerName =
+              data.team_players?.length > 0
+                ? data.team_players[0]?.player_name
+                : '';
           }
           return stateToUpdate;
         });
@@ -196,17 +205,28 @@ export class Game extends React.Component<Props, State> {
       });
   }
 
-  public handleChangePlayerTeam(e, { name, team }) {
+  public handleChangePlayer(e, { name, team, newPlayerName = '' }) {
     e.preventDefault();
 
     axios
       .post('/change-player', {
         game_id: this.state.game.id,
-        player_name: name,
+        player_name: newPlayerName,
         team: team,
+        old_player_name: name,
       })
       .then(({ data }) => {
-        this.setState({ game: data });
+        this.setState((oldState) => {
+          if (oldState.currentPlayerName === name) {
+            oldState.currentPlayerTeam = team;
+            oldState.currentPlayerName = !!newPlayerName ? newPlayerName : name;
+          }
+
+          return {
+            ...oldState,
+            game: data,
+          };
+        });
       });
   }
 
@@ -219,7 +239,18 @@ export class Game extends React.Component<Props, State> {
         player_name: name,
       })
       .then(({ data }) => {
-        this.setState({ game: data });
+        this.setState((oldState) => {
+          if (oldState.currentPlayerName === name) {
+            oldState.currentPlayerName = '';
+            oldState.currentPlayerTeam = '';
+            oldState.didJoin = false;
+          }
+
+          return {
+            ...oldState,
+            game: data,
+          };
+        });
       });
   }
 
@@ -244,7 +275,14 @@ export class Game extends React.Component<Props, State> {
         player_name: name,
       })
       .then(({ data }) => {
-        this.setState({ game: data, currentPlayerName: name });
+        const player = data.team_players.find(
+          (player) => player.player_name === name
+        );
+        this.setState({
+          game: data,
+          currentPlayerName: name,
+          currentPlayerTeam: player.team,
+        });
       });
   }
 
@@ -325,6 +363,43 @@ export class Game extends React.Component<Props, State> {
           {shareLink}
           {timer}
         </div>
+        <div id="infoContent" style={{ margin: '0.5em 0' }}>
+          <div className="addContainer">
+            <input
+              className="addInput"
+              value={this.state.currentPlayerInput}
+              onChange={(e) =>
+                this.setState({
+                  currentPlayerInput: e.target.value,
+                })
+              }
+              placeholder="Your Name"
+            />
+            <button
+              className="add"
+              disabled={this.state.currentPlayerInput.length === 0}
+              onClick={(e) => {
+                if (this.state.didJoin) {
+                  this.handleChangePlayer(e, {
+                    name: this.state.currentPlayerName,
+                    team: this.state.currentPlayerTeam,
+                    newPlayerName: this.state.currentPlayerInput,
+                  });
+                  this.setState({
+                    currentPlayerName: this.state.currentPlayerInput,
+                  });
+                } else {
+                  this.handleAddPlayer(e, this.state.currentPlayerInput);
+                  this.setState({
+                    didJoin: true,
+                  });
+                }
+              }}
+            >
+              {this.state.didJoin ? 'Update' : 'Join!'}
+            </button>
+          </div>
+        </div>
         {this.state.game.stage === 0 && (
           <GameSetup
             words={this.state.game.words}
@@ -332,7 +407,7 @@ export class Game extends React.Component<Props, State> {
             handleRemoveWord={(e, word) => this.handleRemoveWord(e, word)}
             players={this.state.game.team_players}
             handleChangePlayerTeam={(e, player) =>
-              this.handleChangePlayerTeam(e, player)
+              this.handleChangePlayer(e, player)
             }
             handleRemovePlayer={(e, name) => this.handleRemovePlayer(e, name)}
             moveToNextStage={(e) => this.handleNextStage(e)}
@@ -369,9 +444,9 @@ export class Game extends React.Component<Props, State> {
             />
           )}
         {!!this.state.game.winning_team && (
-          <div>
+          <div style={{ margin: '0.5em' }}>
             drumroll.....
-            <div>
+            <div style={{ fontSize: '1.3em' }}>
               The winner is: <strong>{this.state.game.winning_team}</strong>
             </div>
           </div>
@@ -381,11 +456,11 @@ export class Game extends React.Component<Props, State> {
             Next game
           </button>
         </form>
-        <div id="coffee">
+        {/* <div id="coffee">
           <a href="https://www.buymeacoffee.com/derrickpersson" target="_blank">
             Buy the developer a coffee.
           </a>
-        </div>
+        </div> */}
       </div>
     );
   }
