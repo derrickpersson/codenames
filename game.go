@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 )
 
@@ -213,11 +214,6 @@ func (g *Game) NextTurn(currentTurn int) bool {
 	if g.WinningTeam != nil {
 		return false
 	}
-	// TODO: remove currentTurn != 0 once we can be sure all
-	// clients are running up-to-date versions of the frontend.
-	if g.Round != currentTurn && currentTurn != 0 {
-		return false
-	}
 	g.UpdatedAt = time.Now()
 	g.Round++
 	g.getNextPlayer()
@@ -298,24 +294,6 @@ func (g *Game) GetNextWord(correct bool) {
 	g.UpdatedAt = time.Now()
 }
 
-// func (g *Game) Guess(idx int) error {
-// 	if idx > len(g.Layout) || idx < 0 {
-// 		return fmt.Errorf("index %d is invalid", idx)
-// 	}
-// 	if g.Revealed[idx] {
-// 		return errors.New("cell has already been revealed")
-// 	}
-// 	g.UpdatedAt = time.Now()
-// 	g.Revealed[idx] = true
-
-// 	g.checkWinningCondition()
-// 	if g.Layout[idx] != g.currentTeam() {
-// 		g.Round = g.Round + 1
-// 		g.RoundStartedAt = time.Now()
-// 	}
-// 	return nil
-// }
-
 func (g *Game) currentTeam() Team {
 	if g.Round%2 == 0 {
 		return g.StartingTeam
@@ -326,8 +304,11 @@ func (g *Game) currentTeam() Team {
 func (g *Game) AddWord(word string) error {
 	if g.Stage == Setup {
 		g.UpdatedAt = time.Now()
-		g.Words = append(g.Words, word)
-		g.GameState.Revealed = append(g.GameState.Revealed, false)
+		wordIdx := findWordIndex(g.Words, word)
+		if wordIdx == -1 {
+			g.Words = append(g.Words, word)
+			g.GameState.Revealed = append(g.GameState.Revealed, false)
+		}
 	} else {
 		return errors.New("can't add words when past the setup stage")
 	}
@@ -418,7 +399,9 @@ func (g *Game) AddPlayer(player TeamPlayer) error {
 
 func findWordIndex(s []string, search string) int {
 	for idx, item := range s {
-		if item == search {
+		lcItem := strings.ToLower(item)
+		lcSearch := strings.ToLower(search)
+		if lcItem == lcSearch {
 			return idx
 		}
 	}

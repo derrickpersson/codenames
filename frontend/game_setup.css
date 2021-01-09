@@ -65,9 +65,52 @@ button:hover {
 .remove {
   border: none;
   background: none;
+  border-radius: 25px;
+  transform: rotate(45deg);
+  font-size: 1.5em;
+  line-height: 1em;
+  outline: none;
 }
+
+.playerTile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.playerActionsContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 60%;
+}
+
+.playerActionsContainer > * {
+  margin: 0px 5px;
+}
+
 .remove:hover {
   cursor: pointer;
+  background: #ddd;
+}
+
+.changeTeams {
+  background: none;
+  border: 1px transparent solid;
+  padding: 10px;
+  border-radius: 5px;
+  outline: none;
+}
+
+.blueSwitch:hover {
+  border: 1px red solid;
+  background: #ffc0cb;
+}
+
+.redSwitch:hover {
+  border: 1px blue solid;
+  background: #89cff0;
 }
 
 .action-footer {

@@ -101,13 +101,6 @@ export class Game extends React.Component<Props, State> {
       .then(({ data }) => {
         this.setState((oldState) => {
           const stateToUpdate = { game: data };
-          // if (oldState.currentPlayerName === '') {
-          //   // Defaults to setting who ever joins to be the first player in the game.
-          //   stateToUpdate.currentPlayerName =
-          //     data.team_players?.length > 0
-          //       ? data.team_players[0]?.player_name
-          //       : '';
-          // }
           return stateToUpdate;
         });
       })
@@ -165,7 +158,6 @@ export class Game extends React.Component<Props, State> {
       return;
     }
 
-    // TODO: Handle next game case => adding players automatically
     axios
       .post('/next-game', {
         game_id: this.state.game.id,
@@ -402,6 +394,7 @@ export class Game extends React.Component<Props, State> {
         </div>
         {this.state.game.stage === 0 && (
           <GameSetup
+            usesRandomWords={this.state.game.word_set.length > 0}
             words={this.state.game.words}
             handleAddWord={(e, word) => this.handleAddWord(e, word)}
             handleRemoveWord={(e, word) => this.handleRemoveWord(e, word)}

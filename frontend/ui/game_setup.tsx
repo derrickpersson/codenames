@@ -11,12 +11,8 @@ interface GameSetupProps {
   handleRemovePlayer: (e, name) => void;
   handleAddPlayer: (e, name) => void;
   moveToNextStage: (e) => void;
+  usesRandomWords: boolean;
 }
-
-// What happens on this screen?
-// Display teams (members on each)
-// Can change your own team
-// Add words
 
 const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
   words = [],
@@ -25,37 +21,41 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
   players = [],
   handleChangePlayerTeam,
   handleRemovePlayer,
-  handleAddPlayer,
   moveToNextStage,
+  usesRandomWords,
 }) => {
   const [privateWords, setPrivateWords] = React.useState([]);
   const [wordInput, setWordInput] = React.useState('');
-  const [playerInput, setPlayerInput] = React.useState('');
   const teamComposition = players.reduce(
     (a, player) => {
-      a[player.team] = true;
+      a[player.team]++;
       return a;
     },
-    { red: false, blue: false }
+    { red: 0, blue: 0 }
   );
-  const hasOpposingTeams = teamComposition.red && teamComposition.blue;
-
+  const hasOpposingTeams =
+    teamComposition.red >= 2 && teamComposition.blue >= 2;
   return (
     <div>
       <div className="setup-container">
         <div className="column">
-          <div>Words: ({words.length} total)</div>
+          <div>Custom Words: ({words.length} total)</div>
           <div>
             {privateWords.map((word, idx) => (
               <div key={`${word}-${idx}`} className="tile">
                 {word}
+
                 <button
                   className="remove"
                   onClick={(e) => {
                     handleRemoveWord(e, word);
+                    setPrivateWords([
+                      ...privateWords.slice(0, idx),
+                      ...privateWords.slice(idx + 1),
+                    ]);
                   }}
                 >
-                  X
+                  +
                 </button>
               </div>
             ))}
@@ -84,12 +84,13 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
             <div>Players:</div>
             {(players || []).map((player, idx) => (
               <div
-                className={`tile ${player.team}`}
+                className={`tile ${player.team} playerTile`}
                 key={`${player.player_name}-${idx}`}
               >
                 {player.player_name}
-                <div>
+                <div className="playerActionsContainer">
                   <button
+                    className={`changeTeams ${player.team}Switch`}
                     onClick={(e) =>
                       handleChangePlayerTeam(e, {
                         name: player.player_name,
@@ -105,7 +106,7 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
                       handleRemovePlayer(e, player.player_name);
                     }}
                   >
-                    X
+                    +
                   </button>
                 </div>
               </div>
@@ -115,7 +116,7 @@ const GameSetup: React.FunctionalComponent<GameSetupProps> = ({
       </div>
       <div className="action-footer">
         <button
-          disabled={words.length < 5 || !hasOpposingTeams}
+          disabled={!hasOpposingTeams || (words.length > 5 && !usesRandomWords)}
           onClick={(e) => moveToNextStage(e)}
         >
           Start
